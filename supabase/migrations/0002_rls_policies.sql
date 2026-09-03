@@ -38,6 +38,14 @@ create policy "users_update_self_or_same_gym_admin" on users
   for update using (
     id = auth.uid()
     or (current_user_is_admin() and gym_id = current_user_gym_id())
+  )
+  with check (
+    (
+      id = auth.uid()
+      and role = (select u.role from users u where u.id = auth.uid())
+      and gym_id is not distinct from (select u.gym_id from users u where u.id = auth.uid())
+    )
+    or (current_user_is_admin() and gym_id = current_user_gym_id())
   );
 
 -- memberships: self (read-only), admin full access within gym
