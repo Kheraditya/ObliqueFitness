@@ -14,19 +14,21 @@ describe('supabase client', () => {
     process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY = 'anon-key';
   });
 
-  it('creates a client with the configured url, anon key, and persistent session storage', async () => {
-    const { createClient } = await import('@supabase/supabase-js');
-    await import('./supabase');
+  it('creates a client with the configured url, anon key, and persistent session storage', () => {
+    jest.isolateModules(() => {
+      const { createClient } = require('@supabase/supabase-js');
+      require('./supabase');
 
-    expect(createClient).toHaveBeenCalledWith(
-      'https://example.supabase.co',
-      'anon-key',
-      expect.objectContaining({
-        auth: expect.objectContaining({
-          persistSession: true,
-          autoRefreshToken: true,
-        }),
-      })
-    );
+      expect(createClient).toHaveBeenCalledWith(
+        'https://example.supabase.co',
+        'anon-key',
+        expect.objectContaining({
+          auth: expect.objectContaining({
+            persistSession: true,
+            autoRefreshToken: true,
+          }),
+        })
+      );
+    });
   });
 });
