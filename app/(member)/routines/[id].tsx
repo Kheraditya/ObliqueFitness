@@ -5,6 +5,7 @@ import { VictoryChart, VictoryBar, VictoryAxis, VictoryTheme } from 'victory-nat
 import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
 import { getRoutine, getRoutineVolumeHistory } from '../../../src/features/routines/api';
+import { startSession } from '../../../src/features/workout/api';
 import type { Routine, VolumeHistoryPoint } from '../../../src/features/routines/types';
 import { colors, radius, spacing, typography } from '../../../src/theme';
 
@@ -27,10 +28,15 @@ export default function RoutineDetail() {
     );
   }
 
+  async function handleStartRoutine() {
+    const { id: sessionId } = await startSession(routine.id);
+    if (sessionId) router.push(`/(member)/active-workout/${sessionId}`);
+  }
+
   return (
     <Screen>
       <Text style={[typography.title, styles.heading]}>{routine.name}</Text>
-      <Button title="Start Routine" onPress={() => {}} disabled />
+      <Button title="Start Routine" onPress={handleStartRoutine} />
       <Button title="Edit Routine" variant="secondary" onPress={() => router.push(`/(member)/routines/${routine.id}/edit`)} />
       <View style={styles.chartCard}>
         {history.length === 0 ? (
