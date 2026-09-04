@@ -6,7 +6,7 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { startSession, getSessionExercises, getLoggedSets } from './api';
+import { startSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession } from './api';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -126,5 +126,59 @@ describe('getLoggedSets', () => {
     const result = await getLoggedSets('s1');
 
     expect(result).toEqual([]);
+  });
+});
+
+describe('logSet', () => {
+  it('inserts a workout_sets row', async () => {
+    const insert = jest.fn().mockResolvedValue({ error: null });
+    (supabase.from as jest.Mock).mockReturnValue({ insert });
+
+    const result = await logSet('s1', 'ex1', 2, 100, 5, 8);
+
+    expect(supabase.from).toHaveBeenCalledWith('workout_sets');
+    expect(insert).toHaveBeenCalledWith({
+      session_id: 's1',
+      exercise_id: 'ex1',
+      set_number: 2,
+      weight: 100,
+      reps: 5,
+      rpe: 8,
+    });
+    expect(result).toEqual({ error: null });
+  });
+});
+
+describe('updateWorkoutSet', () => {
+  it('updates weight/reps/rpe for a set by id', async () => {
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ update });
+
+    const result = await updateWorkoutSet('set1', 105, 5, 9);
+
+    expect(update).toHaveBeenCalledWith({ weight: 105, reps: 5, rpe: 9 });
+    expect(eq).toHaveBeenCalledWith('id', 'set1');
+    expect(result).toEqual({ error: null });
+  });
+});
+
+describe('finishSession', () => {
+  it('sets ended_at and a computed duration_seconds', async () => {
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ update });
+
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(new Date('2026-09-04T00:10:00Z').getTime());
+
+    const result = await finishSession('s1', '2026-09-04T00:00:00Z');
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ duration_seconds: 600, ended_at: expect.any(String) })
+    );
+    expect(eq).toHaveBeenCalledWith('id', 's1');
+    expect(result).toEqual({ error: null });
+
+    nowSpy.mockRestore();
   });
 });

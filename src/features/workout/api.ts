@@ -117,3 +117,47 @@ export async function getLoggedSets(sessionId: string): Promise<LoggedSet[]> {
     rpe: row.rpe,
   }));
 }
+
+export async function logSet(
+  sessionId: string,
+  exerciseId: string,
+  setNumber: number,
+  weight: number | null,
+  reps: number | null,
+  rpe: number | null
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('workout_sets').insert({
+    session_id: sessionId,
+    exercise_id: exerciseId,
+    set_number: setNumber,
+    weight,
+    reps,
+    rpe,
+  });
+  return { error: error ? error.message : null };
+}
+
+export async function updateWorkoutSet(
+  setId: string,
+  weight: number | null,
+  reps: number | null,
+  rpe: number | null
+): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('workout_sets').update({ weight, reps, rpe }).eq('id', setId);
+  return { error: error ? error.message : null };
+}
+
+export async function finishSession(sessionId: string, startedAt: string): Promise<{ error: string | null }> {
+  // Use Date.now() explicitly (rather than `new Date()`) so this respects a mocked clock in
+  // tests -- `new Date()` reads the system clock independently of `Date.now()` and does not
+  // honor a `jest.spyOn(Date, 'now')` mock.
+  const endedAt = new Date(Date.now());
+  const durationSeconds = Math.round((endedAt.getTime() - new Date(startedAt).getTime()) / 1000);
+
+  const { error } = await supabase
+    .from('workout_sessions')
+    .update({ ended_at: endedAt.toISOString(), duration_seconds: durationSeconds })
+    .eq('id', sessionId);
+
+  return { error: error ? error.message : null };
+}
