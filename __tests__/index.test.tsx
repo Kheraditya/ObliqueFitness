@@ -12,7 +12,7 @@ jest.mock('expo-router', () => ({
 }));
 
 import { useAuth } from '../src/features/auth/useAuth';
-import Index from './index';
+import Index from '../app/index';
 
 describe('app/index', () => {
   it('shows nothing that redirects while auth state is loading', async () => {
