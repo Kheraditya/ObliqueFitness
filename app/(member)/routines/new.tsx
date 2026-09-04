@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '../../../src/components/Screen';
 import { TextField } from '../../../src/components/TextField';
 import { Button } from '../../../src/components/Button';
+import { ErrorText } from '../../../src/components/ErrorText';
 import { RoutineExerciseList } from '../../../src/features/routines/components/RoutineExerciseList';
 import { createRoutine } from '../../../src/features/routines/api';
 import { getExercise } from '../../../src/features/exercises/api';
@@ -12,6 +13,7 @@ export default function NewRoutine() {
   const { addExerciseId } = useLocalSearchParams<{ addExerciseId?: string }>();
   const [name, setName] = useState('');
   const [exercises, setExercises] = useState<RoutineExerciseDraft[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!addExerciseId) return;
@@ -26,8 +28,12 @@ export default function NewRoutine() {
   }, [addExerciseId]);
 
   async function handleSave() {
-    const { id } = await createRoutine(name, exercises);
-    if (id) router.replace(`/(member)/routines/${id}`);
+    const result = await createRoutine(name, exercises);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    if (result.id) router.replace(`/(member)/routines/${result.id}`);
   }
 
   return (
@@ -39,6 +45,7 @@ export default function NewRoutine() {
         onPress={() => router.push({ pathname: '/(member)/profile/exercises', params: { pickMode: 'true', returnTo: '/(member)/routines/new' } })}
       />
       <RoutineExerciseList exercises={exercises} onChange={setExercises} />
+      {error && <ErrorText>{error}</ErrorText>}
       <Button title="Save" onPress={handleSave} />
     </Screen>
   );

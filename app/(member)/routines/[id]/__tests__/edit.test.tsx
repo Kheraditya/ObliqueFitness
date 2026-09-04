@@ -80,4 +80,38 @@ describe('EditRoutine', () => {
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
     await waitFor(() => expect(screen.getByText('Squat')).toBeTruthy());
   });
+
+  it('shows Loading and hides Save/Delete when getRoutine fails to load the routine', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: 'r1' });
+    (getRoutine as jest.Mock).mockResolvedValue(null);
+
+    await render(<EditRoutine />);
+
+    await waitFor(() => expect(getRoutine).toHaveBeenCalledWith('r1'));
+
+    expect(screen.getByText('Loading...')).toBeTruthy();
+    expect(screen.queryByText('Save')).toBeNull();
+    expect(screen.queryByText('Delete Routine')).toBeNull();
+  });
+
+  it('shows an error and does not navigate when updateRoutine fails', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: 'r1' });
+    (getRoutine as jest.Mock).mockResolvedValue({
+      id: 'r1',
+      name: 'Push Day',
+      exercises: [],
+    });
+    (updateRoutine as jest.Mock).mockResolvedValue({ error: 'update failed' });
+
+    await render(<EditRoutine />);
+
+    await waitFor(() => expect(screen.getByText('Save')).toBeTruthy());
+
+    (router.replace as jest.Mock).mockClear();
+
+    await fireEvent.press(screen.getByText('Save'));
+
+    await waitFor(() => expect(screen.getByText('update failed')).toBeTruthy());
+    expect(router.replace).not.toHaveBeenCalled();
+  });
 });

@@ -36,4 +36,19 @@ describe('NewRoutine', () => {
     ]);
     expect(router.replace).toHaveBeenCalledWith('/(member)/routines/r1');
   });
+
+  it('shows an error and does not navigate when createRoutine partially fails', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
+    (createRoutine as jest.Mock).mockResolvedValue({ id: 'r1', error: 'insert failed' });
+
+    await render(<NewRoutine />);
+
+    (router.replace as jest.Mock).mockClear();
+
+    await fireEvent.changeText(screen.getByPlaceholderText('Routine name'), 'Push Day');
+    await fireEvent.press(screen.getByText('Save'));
+
+    await waitFor(() => expect(screen.getByText('insert failed')).toBeTruthy());
+    expect(router.replace).not.toHaveBeenCalled();
+  });
 });
