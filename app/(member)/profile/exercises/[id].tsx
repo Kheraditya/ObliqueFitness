@@ -5,6 +5,8 @@ import { Screen } from '../../../../src/components/Screen';
 import { getExercise } from '../../../../src/features/exercises/api';
 import type { Exercise } from '../../../../src/features/exercises/types';
 import { SummaryTab } from '../../../../src/features/exercises/components/SummaryTab';
+import { HistoryTab } from '../../../../src/features/exercises/components/HistoryTab';
+import { HowToTab } from '../../../../src/features/exercises/components/HowToTab';
 import { colors, spacing, typography } from '../../../../src/theme';
 
 type TabKey = 'summary' | 'history' | 'howto' | 'leaderboard';
@@ -47,7 +49,11 @@ export default function ExerciseDetail() {
           );
         })}
       </View>
-      <ScrollView>{activeTab === 'summary' && <SummaryTab exercise={exercise} />}</ScrollView>
+      <ScrollView>
+        {activeTab === 'summary' && <SummaryTab exercise={exercise} />}
+        {activeTab === 'history' && <HistoryTab exerciseId={exercise.id} />}
+        {activeTab === 'howto' && <HowToTab exercise={exercise} />}
+      </ScrollView>
     </Screen>
   );
 }

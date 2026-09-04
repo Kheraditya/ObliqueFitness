@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
 
 const mockExercise = {
   id: 'ex-1',
@@ -34,5 +34,16 @@ describe('ExerciseDetail', () => {
 
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
     expect(screen.getByText('Primary: chest')).toBeTruthy();
+  });
+
+  it('shows instructions when the How to tab is selected', async () => {
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('How to'));
+
+    await waitFor(() => expect(screen.getByText('Lie on the bench.')).toBeTruthy());
   });
 });
