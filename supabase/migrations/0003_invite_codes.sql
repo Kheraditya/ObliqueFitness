@@ -31,6 +31,10 @@ begin
     raise exception 'Not authenticated';
   end if;
 
+  if exists (select 1 from users where id = auth.uid() and gym_id is not null) then
+    raise exception 'Already a member of a gym';
+  end if;
+
   select * into v_code from invite_codes where code = p_code for update;
 
   if not found then

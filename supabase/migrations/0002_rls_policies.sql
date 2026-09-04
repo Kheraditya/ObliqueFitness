@@ -119,3 +119,8 @@ create policy "workout_sets_admin_read" on workout_sets
       )
     )
   );
+
+alter table gyms enable row level security;
+
+create policy "gyms_select_authenticated" on gyms
+  for select using (auth.role() = 'authenticated');
