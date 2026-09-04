@@ -11,6 +11,7 @@ export interface HomeSummary {
 
 interface SessionWithSetsRow {
   started_at: string;
+  ended_at: string | null;
   workout_sets: { weight: number | null; reps: number | null; exercises: { primary_muscles: string[] } | null }[];
 }
 
@@ -26,7 +27,8 @@ function daysAgoISOString(days: number): string {
 }
 
 function toDateString(isoString: string): string {
-  return isoString.slice(0, 10);
+  const d = new Date(isoString);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function sessionVolume(row: SessionWithSetsRow): number {
@@ -62,7 +64,7 @@ export async function getMuscleVolumes(): Promise<{ muscle: string; volume: numb
 export async function getHomeSummary(): Promise<HomeSummary> {
   const { data, error } = await supabase
     .from('workout_sessions')
-    .select('started_at, workout_sets(weight, reps, exercises(primary_muscles))')
+    .select('started_at, ended_at, workout_sets(weight, reps, exercises(primary_muscles))')
     .gte('started_at', daysAgoISOString(14));
 
   const rows = error || !data ? [] : (data as unknown as SessionWithSetsRow[]);
@@ -70,6 +72,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
   const sevenDaysAgo = daysAgoISOString(7);
   const thisWeekRows = rows.filter((r) => r.started_at >= sevenDaysAgo);
   const lastWeekRows = rows.filter((r) => r.started_at < sevenDaysAgo);
+  const finishedThisWeekRows = thisWeekRows.filter((r) => r.ended_at != null);
 
   const thisWeekVolume = thisWeekRows.reduce((sum, r) => sum + sessionVolume(r), 0);
   const lastWeekVolume = lastWeekRows.reduce((sum, r) => sum + sessionVolume(r), 0);
@@ -84,7 +87,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
   const completedDates = streakRows.filter((r) => r.ended_at != null).map((r) => toDateString(r.started_at));
 
   return {
-    workoutCountThisWeek: thisWeekRows.length,
+    workoutCountThisWeek: finishedThisWeekRows.length,
     volumeChangePct: computeVolumeChangePct(thisWeekVolume, lastWeekVolume),
     streakDays: computeStreak(completedDates),
     muscleVolumes: sumMuscleVolumes(thisWeekRows),

@@ -24,11 +24,15 @@ export default function Measures() {
   const activeType = selectedType === 'custom' ? customLabel : selectedType;
 
   useEffect(() => {
-    if (!activeType) return;
+    if (!activeType) {
+      setEntries([]);
+      return;
+    }
     listMeasurements(activeType).then(setEntries);
   }, [activeType]);
 
   async function handleLog() {
+    setError(null);
     const value = parseFloat(valueInput);
     if (Number.isNaN(value) || !activeType) return;
 
@@ -44,6 +48,7 @@ export default function Measures() {
   }
 
   async function handleDelete(id: string) {
+    setError(null);
     const { error: deleteError } = await deleteMeasurement(id);
     if (deleteError) {
       setError(deleteError);

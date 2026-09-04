@@ -1,5 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react-native';
 
+jest.mock('expo-router', () => ({
+  useFocusEffect: (callback: () => void) => callback(),
+}));
+
 jest.mock('../../../src/features/progress/api', () => ({
   getHomeSummary: jest.fn(),
 }));

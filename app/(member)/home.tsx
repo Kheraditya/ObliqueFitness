@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { getHomeSummary, type HomeSummary } from '../../src/features/progress/api';
 import { colors, radius, spacing, typography } from '../../src/theme';
@@ -7,9 +8,11 @@ import { colors, radius, spacing, typography } from '../../src/theme';
 export default function Home() {
   const [summary, setSummary] = useState<HomeSummary | null>(null);
 
-  useEffect(() => {
-    getHomeSummary().then(setSummary);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getHomeSummary().then(setSummary);
+    }, [])
+  );
 
   const topMuscles = (summary?.muscleVolumes ?? [])
     .slice()

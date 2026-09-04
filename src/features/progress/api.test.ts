@@ -61,10 +61,12 @@ describe('getHomeSummary', () => {
       data: [
         {
           started_at: '2026-09-03T00:00:00Z',
+          ended_at: '2026-09-03T01:00:00Z',
           workout_sets: [{ weight: 100, reps: 5, exercises: { primary_muscles: ['chest'] } }],
         },
         {
           started_at: '2026-08-25T00:00:00Z',
+          ended_at: '2026-08-25T01:00:00Z',
           workout_sets: [{ weight: 100, reps: 4, exercises: { primary_muscles: ['chest'] } }],
         },
       ],
@@ -92,5 +94,42 @@ describe('getHomeSummary', () => {
     expect(result.volumeChangePct).toBe(25);
     expect(result.streakDays).toBe(2);
     expect(result.muscleVolumes).toEqual([{ muscle: 'chest', volume: 500 }]);
+  });
+
+  it('excludes unfinished sessions from workoutCountThisWeek but still counts their volume', async () => {
+    const volumeGte = jest.fn().mockResolvedValue({
+      data: [
+        {
+          started_at: '2026-09-03T00:00:00Z',
+          ended_at: '2026-09-03T01:00:00Z',
+          workout_sets: [{ weight: 100, reps: 5, exercises: { primary_muscles: ['chest'] } }],
+        },
+        {
+          started_at: '2026-09-04T00:00:00Z',
+          ended_at: null,
+          workout_sets: [{ weight: 50, reps: 10, exercises: { primary_muscles: ['legs'] } }],
+        },
+      ],
+      error: null,
+    });
+    const volumeSelect = jest.fn(() => ({ gte: volumeGte }));
+
+    const streakOrder = jest.fn().mockResolvedValue({ data: [], error: null });
+    const streakGte = jest.fn(() => ({ order: streakOrder }));
+    const streakSelect = jest.fn(() => ({ gte: streakGte }));
+
+    (supabase.from as jest.Mock)
+      .mockReturnValueOnce({ select: volumeSelect })
+      .mockReturnValueOnce({ select: streakSelect });
+
+    const result = await getHomeSummary();
+
+    expect(result.workoutCountThisWeek).toBe(1);
+    expect(result.muscleVolumes).toEqual(
+      expect.arrayContaining([
+        { muscle: 'chest', volume: 500 },
+        { muscle: 'legs', volume: 500 },
+      ])
+    );
   });
 });
