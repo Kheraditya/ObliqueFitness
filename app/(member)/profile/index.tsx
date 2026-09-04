@@ -11,8 +11,8 @@ export default function ProfileHome() {
       <Text style={[typography.title, styles.heading]}>Profile</Text>
       <View style={styles.grid}>
         <Button title="Exercises" variant="secondary" onPress={() => router.push('/(member)/profile/exercises')} />
-        <Button title="Statistics" variant="secondary" disabled onPress={() => {}} />
-        <Button title="Measures" variant="secondary" disabled onPress={() => {}} />
+        <Button title="Statistics" variant="secondary" onPress={() => router.push('/(member)/profile/statistics')} />
+        <Button title="Measures" variant="secondary" onPress={() => router.push('/(member)/profile/measures')} />
         <Button title="Calendar" variant="secondary" disabled onPress={() => {}} />
       </View>
       <Button
