@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import type { Routine, RoutineExercise } from './types';
+import type { Routine, RoutineExercise, RoutineExerciseDraft } from './types';
 
 interface RoutineExerciseRow {
   id: string;
@@ -44,4 +44,69 @@ export async function getRoutine(id: string): Promise<Routine | null> {
 export async function deleteRoutine(id: string): Promise<{ error: string | null }> {
   const { error } = await supabase.from('routines').delete().eq('id', id);
   return { error: error ? error.message : null };
+}
+
+export async function createRoutine(
+  name: string,
+  exercises: RoutineExerciseDraft[]
+): Promise<{ id: string | null; error: string | null }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) return { id: null, error: 'Not authenticated' };
+
+  const { data: routine, error: routineError } = await supabase
+    .from('routines')
+    .insert({ owner_id: session.user.id, name })
+    .select('id')
+    .single();
+
+  if (routineError || !routine) {
+    return { id: null, error: routineError ? routineError.message : 'Failed to create routine' };
+  }
+
+  const routineId = (routine as { id: string }).id;
+
+  if (exercises.length > 0) {
+    const rows = exercises.map((ex, index) => ({
+      routine_id: routineId,
+      exercise_id: ex.exerciseId,
+      order: index,
+      target_sets: ex.targetSets,
+      rest_seconds: ex.restSeconds,
+      superset_group: ex.supersetGroup,
+    }));
+    const { error: exercisesError } = await supabase.from('routine_exercises').insert(rows);
+    if (exercisesError) return { id: routineId, error: exercisesError.message };
+  }
+
+  return { id: routineId, error: null };
+}
+
+export async function updateRoutine(
+  id: string,
+  name: string,
+  exercises: RoutineExerciseDraft[]
+): Promise<{ error: string | null }> {
+  const { error: nameError } = await supabase.from('routines').update({ name }).eq('id', id);
+  if (nameError) return { error: nameError.message };
+
+  const { error: deleteError } = await supabase.from('routine_exercises').delete().eq('routine_id', id);
+  if (deleteError) return { error: deleteError.message };
+
+  if (exercises.length > 0) {
+    const rows = exercises.map((ex, index) => ({
+      routine_id: id,
+      exercise_id: ex.exerciseId,
+      order: index,
+      target_sets: ex.targetSets,
+      rest_seconds: ex.restSeconds,
+      superset_group: ex.supersetGroup,
+    }));
+    const { error: insertError } = await supabase.from('routine_exercises').insert(rows);
+    if (insertError) return { error: insertError.message };
+  }
+
+  return { error: null };
 }
