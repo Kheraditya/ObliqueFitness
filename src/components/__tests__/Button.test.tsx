@@ -16,4 +16,9 @@ describe('Button', () => {
     fireEvent.press(screen.getByText('Tap me'));
     expect(onPress).not.toHaveBeenCalled();
   });
+
+  it('renders an icon when the icon prop is given', async () => {
+    await render(<Button title="Start Empty Workout" onPress={() => {}} variant="dark" icon="add" align="left" />);
+    expect(screen.getByText('Start Empty Workout')).toBeTruthy();
+  });
 });
