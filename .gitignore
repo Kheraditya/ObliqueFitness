@@ -1,4 +1,5 @@
 .superpowers/
+.claude/
 
 # Node / Expo (added ahead of scaffold so scratch/build output never gets committed)
 node_modules/
