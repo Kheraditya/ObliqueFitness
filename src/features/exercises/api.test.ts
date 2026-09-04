@@ -15,7 +15,13 @@ import {
   getLeaderboard,
   setLeaderboardOptIn,
   getLeaderboardOptIn,
+  getStrengthTrend,
+  getLoggedExercises,
 } from './api';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 describe('listExercises', () => {
   it('returns exercises ordered by name', async () => {
@@ -196,5 +202,71 @@ describe('getLeaderboardOptIn', () => {
 
     expect((supabase.from as jest.Mock).mock.calls.length).toBe(fromCallsBefore);
     expect(result).toBe(false);
+  });
+});
+
+describe('getStrengthTrend', () => {
+  it('returns one point per session with max weight and best 1RM', async () => {
+    const order = jest.fn().mockResolvedValue({
+      data: [
+        { weight: 100, reps: 5, session_id: 's1', workout_sessions: { started_at: '2026-09-01T00:00:00Z' } },
+        { weight: 110, reps: 3, session_id: 's1', workout_sessions: { started_at: '2026-09-01T00:00:00Z' } },
+        { weight: 90, reps: 8, session_id: 's2', workout_sessions: { started_at: '2026-09-03T00:00:00Z' } },
+      ],
+      error: null,
+    });
+    const eq = jest.fn(() => ({ order }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getStrengthTrend('ex1');
+
+    expect(supabase.from).toHaveBeenCalledWith('workout_sets');
+    expect(result).toEqual([
+      { date: '2026-09-01T00:00:00Z', maxWeight: 110, best1RM: 110 * (1 + 3 / 30) },
+      { date: '2026-09-03T00:00:00Z', maxWeight: 90, best1RM: 90 * (1 + 8 / 30) },
+    ]);
+  });
+
+  it('returns an empty array on error', async () => {
+    const order = jest.fn().mockResolvedValue({ data: null, error: { message: 'boom' } });
+    const eq = jest.fn(() => ({ order }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getStrengthTrend('ex1');
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe('getLoggedExercises', () => {
+  it('returns distinct exercises sorted by name', async () => {
+    const select = jest.fn().mockResolvedValue({
+      data: [
+        { exercise_id: 'ex2', exercises: { name: 'Squat' } },
+        { exercise_id: 'ex1', exercises: { name: 'Bench Press' } },
+        { exercise_id: 'ex2', exercises: { name: 'Squat' } },
+      ],
+      error: null,
+    });
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getLoggedExercises();
+
+    expect(supabase.from).toHaveBeenCalledWith('workout_sets');
+    expect(result).toEqual([
+      { id: 'ex1', name: 'Bench Press' },
+      { id: 'ex2', name: 'Squat' },
+    ]);
+  });
+
+  it('returns an empty array on error', async () => {
+    const select = jest.fn().mockResolvedValue({ data: null, error: { message: 'boom' } });
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getLoggedExercises();
+
+    expect(result).toEqual([]);
   });
 });

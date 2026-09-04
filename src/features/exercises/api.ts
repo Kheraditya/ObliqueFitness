@@ -81,6 +81,57 @@ export async function getExerciseHistory(exerciseId: string): Promise<HistoryEnt
   return Array.from(bySession.values());
 }
 
+export async function getStrengthTrend(exerciseId: string): Promise<{ date: string; maxWeight: number; best1RM: number }[]> {
+  const { data, error } = await supabase
+    .from('workout_sets')
+    .select('weight, reps, session_id, workout_sessions(started_at)')
+    .eq('exercise_id', exerciseId)
+    .order('completed_at', { ascending: true });
+
+  if (error || !data) return [];
+
+  const rows = data as unknown as HistoryRow[];
+  const bySession = new Map<string, { date: string; maxWeight: number; best1RM: number }>();
+
+  for (const row of rows) {
+    const date = row.workout_sessions?.started_at ?? '';
+    const weight = row.weight ?? 0;
+    const reps = row.reps ?? 0;
+    const oneRM = weight * (1 + reps / 30);
+
+    const existing = bySession.get(row.session_id);
+    if (!existing) {
+      bySession.set(row.session_id, { date, maxWeight: weight, best1RM: oneRM });
+    } else {
+      existing.maxWeight = Math.max(existing.maxWeight, weight);
+      existing.best1RM = Math.max(existing.best1RM, oneRM);
+    }
+  }
+
+  return Array.from(bySession.values()).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+interface LoggedExerciseRow {
+  exercise_id: string;
+  exercises: { name: string } | null;
+}
+
+export async function getLoggedExercises(): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase.from('workout_sets').select('exercise_id, exercises(name)');
+  if (error || !data) return [];
+
+  const rows = data as unknown as LoggedExerciseRow[];
+  const seen = new Map<string, string>();
+
+  for (const row of rows) {
+    if (!seen.has(row.exercise_id)) seen.set(row.exercise_id, row.exercises?.name ?? '');
+  }
+
+  return Array.from(seen.entries())
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function getLeaderboard(exerciseId: string): Promise<LeaderboardEntry[]> {
   const { data, error } = await supabase.rpc('get_exercise_leaderboard', { p_exercise_id: exerciseId });
   if (error || !data) return [];
