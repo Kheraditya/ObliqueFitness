@@ -25,26 +25,34 @@ export default function ActiveWorkout() {
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
+  const [restKey, setRestKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!sessionId) return;
-    Promise.all([getSessionExercises(sessionId), getLoggedSets(sessionId)]).then(([sessionData, loggedSets]) => {
-      setExercises(sessionData.exercises);
-      setStartedAt(sessionData.startedAt);
-      setSets(loggedSets);
-      setLoaded(true);
-    });
+    Promise.all([getSessionExercises(sessionId), getLoggedSets(sessionId)])
+      .then(([sessionData, loggedSets]) => {
+        setExercises(sessionData.exercises);
+        setStartedAt(sessionData.startedAt);
+        setSets(loggedSets);
+        setLoaded(true);
+      })
+      .catch(() => {
+        setError('Failed to load workout.');
+      });
   }, [sessionId]);
 
   useEffect(() => {
     if (!addExerciseId || !loaded) return;
     getExercise(addExerciseId).then((exercise) => {
       if (!exercise) return;
-      setExercises((prev) => [
-        ...prev,
-        { exerciseId: exercise.id, exerciseName: exercise.name, order: prev.length, restSeconds: 90, supersetGroup: null },
-      ]);
+      setExercises((prev) => {
+        if (prev.some((e) => e.exerciseId === exercise.id)) return prev;
+        return [
+          ...prev,
+          { exerciseId: exercise.id, exerciseName: exercise.name, order: prev.length, restSeconds: 90, supersetGroup: null },
+        ];
+      });
       router.setParams({ addExerciseId: undefined });
     });
   }, [addExerciseId, loaded]);
@@ -62,6 +70,7 @@ export default function ActiveWorkout() {
     const index = exercises.findIndex((e) => e.exerciseId === exerciseId);
     if (index !== -1 && shouldStartRestTimer(exercises, index)) {
       setRestSeconds(exercises[index].restSeconds);
+      setRestKey((k) => k + 1);
     }
   }
 
@@ -92,7 +101,9 @@ export default function ActiveWorkout() {
         <Button title="Finish" onPress={handleFinish} />
       </View>
       {error && <ErrorText>{error}</ErrorText>}
-      {restSeconds !== null && <RestTimerBanner seconds={restSeconds} onDismiss={() => setRestSeconds(null)} />}
+      {restSeconds !== null && (
+        <RestTimerBanner key={restKey} seconds={restSeconds} onDismiss={() => setRestSeconds(null)} />
+      )}
       <ScrollView>
         {exercises.map((exercise) => (
           <SessionExerciseCard

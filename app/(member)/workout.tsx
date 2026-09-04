@@ -3,26 +3,33 @@ import { FlatList, Pressable, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { Button } from '../../src/components/Button';
+import { ErrorText } from '../../src/components/ErrorText';
 import { listRoutines } from '../../src/features/routines/api';
 import { startSession } from '../../src/features/workout/api';
 import { typography, spacing, colors } from '../../src/theme';
 
 export default function Workout() {
   const [routines, setRoutines] = useState<{ id: string; name: string }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     listRoutines().then(setRoutines);
   }, []);
 
   async function handleStartEmpty() {
-    const { id } = await startSession(null);
-    if (id) router.push(`/(member)/active-workout/${id}`);
+    const { id, error: startError } = await startSession(null);
+    if (id) {
+      router.push(`/(member)/active-workout/${id}`);
+      return;
+    }
+    setError(startError);
   }
 
   return (
     <Screen>
       <Text style={[typography.title, styles.heading]}>Workout</Text>
       <Button title="Start Empty Workout" onPress={handleStartEmpty} />
+      {error && <ErrorText>{error}</ErrorText>}
       <Text style={[typography.title, styles.sectionHeading]}>Routines</Text>
       <Button title="New Routine" variant="secondary" onPress={() => router.push('/(member)/routines/new')} />
       <Button title="Explore" variant="secondary" onPress={() => {}} disabled />

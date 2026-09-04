@@ -51,4 +51,22 @@ describe('RoutineDetail', () => {
     expect(startSession).toHaveBeenCalledWith('r1');
     expect(router.push).toHaveBeenCalledWith('/(member)/active-workout/s1');
   });
+
+  it('shows an error and does not navigate when starting a session fails', async () => {
+    (router.push as jest.Mock).mockClear();
+    (getRoutine as jest.Mock).mockResolvedValue({
+      id: 'r1',
+      name: 'Push Day',
+      exercises: [],
+    });
+    (startSession as jest.Mock).mockResolvedValue({ id: null, error: 'Not authenticated' });
+
+    await render(<RoutineDetail />);
+    await waitFor(() => expect(screen.getByText('Push Day')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('Start Routine'));
+
+    await waitFor(() => expect(screen.getByText('Not authenticated')).toBeTruthy());
+    expect(router.push).not.toHaveBeenCalled();
+  });
 });

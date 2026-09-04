@@ -4,6 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { VictoryChart, VictoryBar, VictoryAxis, VictoryTheme } from 'victory-native';
 import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
+import { ErrorText } from '../../../src/components/ErrorText';
 import { getRoutine, getRoutineVolumeHistory } from '../../../src/features/routines/api';
 import { startSession } from '../../../src/features/workout/api';
 import type { Routine, VolumeHistoryPoint } from '../../../src/features/routines/types';
@@ -13,6 +14,7 @@ export default function RoutineDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [history, setHistory] = useState<VolumeHistoryPoint[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -28,15 +30,22 @@ export default function RoutineDetail() {
     );
   }
 
+  const routineId = routine.id;
+
   async function handleStartRoutine() {
-    const { id: sessionId } = await startSession(routine.id);
-    if (sessionId) router.push(`/(member)/active-workout/${sessionId}`);
+    const { id: sessionId, error: startError } = await startSession(routineId);
+    if (sessionId) {
+      router.push(`/(member)/active-workout/${sessionId}`);
+      return;
+    }
+    setError(startError);
   }
 
   return (
     <Screen>
       <Text style={[typography.title, styles.heading]}>{routine.name}</Text>
       <Button title="Start Routine" onPress={handleStartRoutine} />
+      {error && <ErrorText>{error}</ErrorText>}
       <Button title="Edit Routine" variant="secondary" onPress={() => router.push(`/(member)/routines/${routine.id}/edit`)} />
       <View style={styles.chartCard}>
         {history.length === 0 ? (
