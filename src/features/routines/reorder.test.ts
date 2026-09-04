@@ -48,10 +48,10 @@ describe('groupWithPrevious', () => {
     expect(groupWithPrevious(list, 0)).toEqual(list);
   });
 
-  it('assigns a group number higher than any existing group', () => {
-    const list = [draft('a', 3), draft('b'), draft('c', 1), draft('d')];
-    const result = groupWithPrevious(list, 3);
-    expect(result[3].supersetGroup).toBe(4);
+  it('joins an existing earlier group even when a later group has a higher number', () => {
+    const list = [draft('a', 1), draft('b', 1), draft('e'), draft('c', 3), draft('d', 3)];
+    const result = groupWithPrevious(list, 2);
+    expect(result[2].supersetGroup).toBe(1);
   });
 });
 
