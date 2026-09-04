@@ -23,7 +23,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'ex-1' }),
 }));
 
-import { getExercise } from '../../../../../src/features/exercises/api';
+import { getExercise, getLeaderboard } from '../../../../../src/features/exercises/api';
 import ExerciseDetail from '../[id]';
 
 describe('ExerciseDetail', () => {
@@ -45,5 +45,17 @@ describe('ExerciseDetail', () => {
     fireEvent.press(screen.getByText('How to'));
 
     await waitFor(() => expect(screen.getByText('Lie on the bench.')).toBeTruthy());
+  });
+
+  it('shows leaderboard entries when the Leaderboard tab is selected', async () => {
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+    (getLeaderboard as jest.Mock).mockResolvedValue([{ userId: 'u1', name: 'Alex', heaviestWeight: 120 }]);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+
+    fireEvent.press(screen.getByText('Leaderboard'));
+
+    await waitFor(() => expect(screen.getByText('1. Alex')).toBeTruthy());
   });
 });
