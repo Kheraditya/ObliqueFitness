@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import type { Routine, RoutineExercise, RoutineExerciseDraft } from './types';
+import type { Routine, RoutineExercise, RoutineExerciseDraft, VolumeHistoryPoint } from './types';
 
 interface RoutineExerciseRow {
   id: string;
@@ -109,4 +109,26 @@ export async function updateRoutine(
   }
 
   return { error: null };
+}
+
+interface VolumeHistoryRow {
+  started_at: string;
+  workout_sets: { weight: number | null; reps: number | null }[];
+}
+
+export async function getRoutineVolumeHistory(routineId: string): Promise<VolumeHistoryPoint[]> {
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('started_at, workout_sets(weight, reps)')
+    .eq('routine_id', routineId)
+    .order('started_at', { ascending: true });
+
+  if (error || !data) return [];
+
+  const rows = data as unknown as VolumeHistoryRow[];
+
+  return rows.map((row) => ({
+    date: row.started_at,
+    volume: row.workout_sets.reduce((sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0), 0),
+  }));
 }

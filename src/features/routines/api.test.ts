@@ -6,7 +6,14 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { listRoutines, getRoutine, deleteRoutine, createRoutine, updateRoutine } from './api';
+import {
+  listRoutines,
+  getRoutine,
+  deleteRoutine,
+  createRoutine,
+  updateRoutine,
+  getRoutineVolumeHistory,
+} from './api';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -150,5 +157,40 @@ describe('updateRoutine', () => {
       { routine_id: 'r1', exercise_id: 'ex1', order: 0, target_sets: 4, rest_seconds: 60, superset_group: 1 },
     ]);
     expect(result).toEqual({ error: null });
+  });
+});
+
+describe('getRoutineVolumeHistory', () => {
+  it('returns one point per session with total volume', async () => {
+    const order = jest.fn().mockResolvedValue({
+      data: [
+        { started_at: '2026-09-01T00:00:00Z', workout_sets: [{ weight: 100, reps: 5 }, { weight: 100, reps: 5 }] },
+        { started_at: '2026-09-03T00:00:00Z', workout_sets: [{ weight: 110, reps: 3 }] },
+      ],
+      error: null,
+    });
+    const eq = jest.fn(() => ({ order }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getRoutineVolumeHistory('r1');
+
+    expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
+    expect(eq).toHaveBeenCalledWith('routine_id', 'r1');
+    expect(result).toEqual([
+      { date: '2026-09-01T00:00:00Z', volume: 1000 },
+      { date: '2026-09-03T00:00:00Z', volume: 330 },
+    ]);
+  });
+
+  it('returns an empty array when there are no sessions', async () => {
+    const order = jest.fn().mockResolvedValue({ data: [], error: null });
+    const eq = jest.fn(() => ({ order }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getRoutineVolumeHistory('r1');
+
+    expect(result).toEqual([]);
   });
 });
