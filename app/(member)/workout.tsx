@@ -28,7 +28,7 @@ export default function Workout() {
   return (
     <Screen>
       <Text style={[typography.title, styles.heading]}>Workout</Text>
-      <Button title="Start Empty Workout" onPress={handleStartEmpty} />
+      <Button title="Start Empty Workout" onPress={handleStartEmpty} variant="dark" icon="add" align="left" />
       {error && <ErrorText>{error}</ErrorText>}
       <Text style={[typography.title, styles.sectionHeading]}>Routines</Text>
       <Button title="New Routine" variant="secondary" onPress={() => router.push('/(member)/routines/new')} />

@@ -15,11 +15,14 @@ describe('SessionExerciseCard', () => {
     const onLogSet = jest.fn();
     await render(<SessionExerciseCard exercise={exercise} sets={[]} onLogSet={onLogSet} onUpdateSet={jest.fn()} />);
 
-    await fireEvent.changeText(screen.getByPlaceholderText('kg'), '100');
+    await fireEvent.changeText(screen.getByPlaceholderText('-'), '100');
     await fireEvent.changeText(screen.getByPlaceholderText('reps'), '5');
     await fireEvent.press(screen.getByText('Add Set'));
 
     expect(onLogSet).toHaveBeenCalledWith(100, 5, null);
+    expect(screen.getByText('SET')).toBeTruthy();
+    expect(screen.getByText('KG')).toBeTruthy();
+    expect(screen.getByText('REPS')).toBeTruthy();
   });
 
   it('edits an existing set when tapped', async () => {
@@ -27,8 +30,10 @@ describe('SessionExerciseCard', () => {
     const sets = [{ id: 'set1', exerciseId: 'ex1', setNumber: 1, weight: 80, reps: 8, rpe: null }];
     await render(<SessionExerciseCard exercise={exercise} sets={sets} onLogSet={jest.fn()} onUpdateSet={onUpdateSet} />);
 
-    await fireEvent.press(screen.getByText(/Set 1:/));
-    await fireEvent.changeText(screen.getByPlaceholderText('kg'), '85');
+    expect(screen.getByText('80')).toBeTruthy();
+    expect(screen.getByText('8')).toBeTruthy();
+    await fireEvent.press(screen.getByText('80'));
+    await fireEvent.changeText(screen.getByPlaceholderText('-'), '85');
     await fireEvent.press(screen.getByText('Update Set'));
 
     expect(onUpdateSet).toHaveBeenCalledWith('set1', 85, 8, null);

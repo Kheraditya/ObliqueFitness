@@ -45,24 +45,58 @@ export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: S
     setRpe(set.rpe != null ? String(set.rpe) : '');
   }
 
+  const nextSetNumber = sets.length + 1;
+
   return (
     <View style={styles.card}>
       <Text style={typography.body}>{exercise.exerciseName}</Text>
       {exercise.supersetGroup != null && <Text style={typography.label}>Superset {exercise.supersetGroup}</Text>}
+      <View style={styles.columnHeaderRow}>
+        <Text style={styles.columnHeader}>SET</Text>
+        <Text style={styles.columnHeader}>KG</Text>
+        <Text style={styles.columnHeader}>REPS</Text>
+        <Text style={styles.columnHeader}>RPE</Text>
+      </View>
       {sets.map((set) => (
         <Pressable key={set.id} onPress={() => startEditing(set)} style={styles.setRow}>
-          <Text style={typography.label}>
-            Set {set.setNumber}: {set.weight ?? '-'} kg x {set.reps ?? '-'}
-            {set.rpe != null ? ` @ RPE ${set.rpe}` : ''}
-          </Text>
+          <View style={styles.setBadge}>
+            <Text style={styles.setBadgeText}>{set.setNumber}</Text>
+          </View>
+          <Text style={styles.setValue}>{set.weight ?? '-'}</Text>
+          <Text style={styles.setValue}>{set.reps ?? '-'}</Text>
+          <Text style={styles.setValue}>{set.rpe ?? '-'}</Text>
         </Pressable>
       ))}
       <View style={styles.inputRow}>
-        <TextInput style={styles.input} placeholder="kg" value={weight} onChangeText={setWeight} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="reps" value={reps} onChangeText={setReps} keyboardType="numeric" />
-        <TextInput style={styles.input} placeholder="RPE" value={rpe} onChangeText={setRpe} keyboardType="numeric" />
+        <View style={styles.setBadge}>
+          <Text style={styles.setBadgeText}>{editingSetId ? sets.find((s) => s.id === editingSetId)?.setNumber ?? nextSetNumber : nextSetNumber}</Text>
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="-"
+          placeholderTextColor={colors.textSecondary}
+          value={weight}
+          onChangeText={setWeight}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="reps"
+          placeholderTextColor={colors.textSecondary}
+          value={reps}
+          onChangeText={setReps}
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="RPE"
+          placeholderTextColor={colors.textSecondary}
+          value={rpe}
+          onChangeText={setRpe}
+          keyboardType="numeric"
+        />
       </View>
-      <Button title={editingSetId ? 'Update Set' : 'Add Set'} variant="secondary" onPress={handleConfirm} />
+      <Button title={editingSetId ? 'Update Set' : 'Add Set'} variant="dark" icon="add" onPress={handleConfirm} />
     </View>
   );
 }
@@ -74,13 +108,47 @@ const styles = StyleSheet.create({
     padding: spacing.m,
     marginBottom: spacing.m,
   },
+  columnHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+    marginTop: spacing.s,
+  },
+  columnHeader: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
   setRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
     paddingVertical: spacing.s,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  setValue: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 15,
+  },
+  setBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.s,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  setBadgeText: {
+    color: colors.textPrimary,
+    fontWeight: '700',
+    fontSize: 13,
+  },
   inputRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.s,
     marginTop: spacing.s,
   },
@@ -93,5 +161,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.s,
     paddingVertical: spacing.s,
     color: colors.textPrimary,
+    textAlign: 'center',
   },
 });
