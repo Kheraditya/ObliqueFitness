@@ -12,6 +12,7 @@ export default function EditRoutine() {
   const { id, addExerciseId } = useLocalSearchParams<{ id: string; addExerciseId?: string }>();
   const [name, setName] = useState('');
   const [exercises, setExercises] = useState<RoutineExerciseDraft[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -27,11 +28,12 @@ export default function EditRoutine() {
           supersetGroup: ex.supersetGroup,
         }))
       );
+      setLoaded(true);
     });
   }, [id]);
 
   useEffect(() => {
-    if (!addExerciseId) return;
+    if (!addExerciseId || !loaded) return;
     getExercise(addExerciseId).then((exercise) => {
       if (!exercise) return;
       setExercises((prev) => [
@@ -40,7 +42,7 @@ export default function EditRoutine() {
       ]);
       router.setParams({ addExerciseId: undefined });
     });
-  }, [addExerciseId]);
+  }, [addExerciseId, loaded]);
 
   async function handleSave() {
     const { error } = await updateRoutine(id, name, exercises);
