@@ -1,7 +1,12 @@
 import { useState } from 'react';
-import { Button, Text, TextInput, View } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { redeemInviteCode } from '../../src/features/auth/api';
+import { Screen } from '../../src/components/Screen';
+import { TextField } from '../../src/components/TextField';
+import { Button } from '../../src/components/Button';
+import { ErrorText } from '../../src/components/ErrorText';
+import { typography, spacing } from '../../src/theme';
 
 export default function JoinGym() {
   const [code, setCode] = useState('');
@@ -17,11 +22,18 @@ export default function JoinGym() {
   }
 
   return (
-    <View>
-      <Text>Enter your gym's invite code</Text>
-      <TextInput placeholder="Invite code" value={code} onChangeText={setCode} autoCapitalize="characters" />
-      {error && <Text>{error}</Text>}
+    <Screen>
+      <Text style={[typography.title, styles.heading]}>Enter your gym's invite code</Text>
+      <TextField label="Invite code" placeholder="Invite code" value={code} onChangeText={setCode} autoCapitalize="characters" />
+      {error && <ErrorText>{error}</ErrorText>}
       <Button title="Join Gym" onPress={handleSubmit} />
-    </View>
+    </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  heading: {
+    marginTop: spacing.l,
+    marginBottom: spacing.s,
+  },
+});

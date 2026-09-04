@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { Button, Text, TextInput, View } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { signUp } from '../../src/features/auth/api';
 import { isValidEmail, isValidPassword } from '../../src/features/auth/validation';
+import { Screen } from '../../src/components/Screen';
+import { Wordmark } from '../../src/components/Wordmark';
+import { TextField } from '../../src/components/TextField';
+import { Button } from '../../src/components/Button';
+import { ErrorText } from '../../src/components/ErrorText';
+import { typography, spacing } from '../../src/theme';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
@@ -27,12 +33,20 @@ export default function Signup() {
   }
 
   return (
-    <View>
-      <Text>Sign Up</Text>
-      <TextInput placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" />
-      <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
-      {error && <Text>{error}</Text>}
+    <Screen>
+      <Wordmark />
+      <Text style={[typography.title, styles.heading]}>Sign Up</Text>
+      <TextField label="Email" placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" />
+      <TextField label="Password" placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
+      {error && <ErrorText>{error}</ErrorText>}
       <Button title="Sign Up" onPress={handleSubmit} />
-    </View>
+    </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  heading: {
+    marginTop: spacing.l,
+    marginBottom: spacing.s,
+  },
+});
