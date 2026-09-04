@@ -102,3 +102,14 @@ export async function setLeaderboardOptIn(optIn: boolean): Promise<{ error: stri
   const { error } = await supabase.from('users').update({ leaderboard_opt_in: optIn }).eq('id', session.user.id);
   return { error: error ? error.message : null };
 }
+
+export async function getLeaderboardOptIn(): Promise<boolean> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) return false;
+
+  const { data } = await supabase.from('users').select('leaderboard_opt_in').eq('id', session.user.id).maybeSingle();
+  return (data as { leaderboard_opt_in: boolean } | null)?.leaderboard_opt_in ?? false;
+}

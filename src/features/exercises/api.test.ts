@@ -14,6 +14,7 @@ import {
   getExerciseHistory,
   getLeaderboard,
   setLeaderboardOptIn,
+  getLeaderboardOptIn,
 } from './api';
 
 describe('listExercises', () => {
@@ -168,5 +169,32 @@ describe('setLeaderboardOptIn', () => {
     const result = await setLeaderboardOptIn(true);
 
     expect(result).toEqual({ error: 'Not authenticated' });
+  });
+});
+
+describe('getLeaderboardOptIn', () => {
+  it('returns the current user\'s opt-in flag', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    const maybeSingle = jest.fn().mockResolvedValue({ data: { leaderboard_opt_in: true }, error: null });
+    const eq = jest.fn(() => ({ maybeSingle }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getLeaderboardOptIn();
+
+    expect(supabase.from).toHaveBeenCalledWith('users');
+    expect(select).toHaveBeenCalledWith('leaderboard_opt_in');
+    expect(eq).toHaveBeenCalledWith('id', 'u1');
+    expect(result).toBe(true);
+  });
+
+  it('returns false without querying users when there is no session', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    const fromCallsBefore = (supabase.from as jest.Mock).mock.calls.length;
+
+    const result = await getLeaderboardOptIn();
+
+    expect((supabase.from as jest.Mock).mock.calls.length).toBe(fromCallsBefore);
+    expect(result).toBe(false);
   });
 });

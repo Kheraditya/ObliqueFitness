@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
-import { getLeaderboard, setLeaderboardOptIn } from '../api';
+import { getLeaderboard, getLeaderboardOptIn, setLeaderboardOptIn } from '../api';
 import type { LeaderboardEntry } from '../types';
 import { Button } from '../../../components/Button';
 import { colors, spacing, typography } from '../../../theme';
@@ -11,6 +11,7 @@ export function LeaderboardTab({ exerciseId }: { exerciseId: string }) {
 
   useEffect(() => {
     getLeaderboard(exerciseId).then(setEntries);
+    getLeaderboardOptIn().then(setOptedIn);
   }, [exerciseId]);
 
   async function handleOptIn() {

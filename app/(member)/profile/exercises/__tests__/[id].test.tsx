@@ -16,6 +16,7 @@ jest.mock('../../../../../src/features/exercises/api', () => ({
   getPersonalRecords: jest.fn().mockResolvedValue({ heaviestWeight: null, best1RM: null, bestSetVolume: null, bestSessionVolume: null }),
   getExerciseHistory: jest.fn().mockResolvedValue([]),
   getLeaderboard: jest.fn().mockResolvedValue([]),
+  getLeaderboardOptIn: jest.fn().mockResolvedValue(false),
   setLeaderboardOptIn: jest.fn(),
 }));
 
@@ -23,7 +24,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'ex-1' }),
 }));
 
-import { getExercise, getLeaderboard } from '../../../../../src/features/exercises/api';
+import { getExercise, getLeaderboard, getLeaderboardOptIn } from '../../../../../src/features/exercises/api';
 import ExerciseDetail from '../[id]';
 
 describe('ExerciseDetail', () => {
@@ -57,5 +58,19 @@ describe('ExerciseDetail', () => {
     await fireEvent.press(screen.getByText('Leaderboard'));
 
     await waitFor(() => expect(screen.getByText('1. Alex')).toBeTruthy());
+  });
+
+  it('hides the opt-in button when the user is already opted in to leaderboards', async () => {
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+    (getLeaderboard as jest.Mock).mockResolvedValue([{ userId: 'u1', name: 'Alex', heaviestWeight: 120 }]);
+    (getLeaderboardOptIn as jest.Mock).mockResolvedValue(true);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('Leaderboard'));
+
+    await waitFor(() => expect(screen.getByText('1. Alex')).toBeTruthy());
+    expect(screen.queryByText('Show me on leaderboards')).toBeNull();
   });
 });
