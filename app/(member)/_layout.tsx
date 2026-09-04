@@ -7,6 +7,7 @@ export default function MemberTabsLayout() {
       <Tabs.Screen name="workout" options={{ title: 'Workout' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       <Tabs.Screen name="routines" options={{ href: null }} />
+      <Tabs.Screen name="active-workout" options={{ href: null }} />
     </Tabs>
   );
 }
