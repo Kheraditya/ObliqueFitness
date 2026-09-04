@@ -14,6 +14,7 @@ const mockExercise = {
 jest.mock('../../../../../src/features/exercises/api', () => ({
   getExercise: jest.fn(),
   getPersonalRecords: jest.fn().mockResolvedValue({ heaviestWeight: null, best1RM: null, bestSetVolume: null, bestSessionVolume: null }),
+  getStrengthTrend: jest.fn().mockResolvedValue([]),
   getExerciseHistory: jest.fn().mockResolvedValue([]),
   getLeaderboard: jest.fn().mockResolvedValue([]),
   getLeaderboardOptIn: jest.fn().mockResolvedValue(false),

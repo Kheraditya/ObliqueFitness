@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Image, Text, View, StyleSheet } from 'react-native';
-import { getPersonalRecords } from '../api';
+import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme } from 'victory-native';
+import { getPersonalRecords, getStrengthTrend } from '../api';
 import type { Exercise, PersonalRecords } from '../types';
 import { colors, radius, spacing, typography } from '../../../theme';
 
 export function SummaryTab({ exercise }: { exercise: Exercise }) {
   const [records, setRecords] = useState<PersonalRecords | null>(null);
+  const [trend, setTrend] = useState<{ date: string; maxWeight: number; best1RM: number }[]>([]);
 
   useEffect(() => {
     getPersonalRecords(exercise.id).then(setRecords);
+    getStrengthTrend(exercise.id).then(setTrend);
   }, [exercise.id]);
 
   return (
@@ -25,6 +28,18 @@ export function SummaryTab({ exercise }: { exercise: Exercise }) {
         <RecordRow label="Best 1RM" value={records?.best1RM} />
         <RecordRow label="Best Set Volume" value={records?.bestSetVolume} />
         <RecordRow label="Best Session Volume" value={records?.bestSessionVolume} />
+      </View>
+      <Text style={[typography.title, styles.chartHeading]}>Strength Trend</Text>
+      <View style={styles.chartCard}>
+        {trend.length === 0 ? (
+          <Text style={typography.subtitle}>No data yet.</Text>
+        ) : (
+          <VictoryChart theme={VictoryTheme.material} domainPadding={20}>
+            <VictoryAxis />
+            <VictoryAxis dependentAxis />
+            <VictoryLine data={trend.map((t) => ({ x: t.date, y: t.maxWeight }))} />
+          </VictoryChart>
+        )}
       </View>
     </View>
   );
@@ -62,5 +77,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.s,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  chartHeading: {
+    fontSize: 20,
+    marginTop: spacing.l,
+    marginBottom: spacing.s,
+  },
+  chartCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.m,
+    padding: spacing.m,
+    minHeight: 120,
+    justifyContent: 'center',
   },
 });
