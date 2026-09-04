@@ -7,11 +7,12 @@ jest.mock('../../lib/supabase', () => ({
       getSession: jest.fn(),
     },
     from: jest.fn(),
+    rpc: jest.fn(),
   },
 }));
 
 import { supabase } from '../../lib/supabase';
-import { signUp, signIn, signOut, getCurrentUserProfile } from './api';
+import { signUp, signIn, signOut, getCurrentUserProfile, redeemInviteCode } from './api';
 
 describe('signUp', () => {
   it('returns no error on success', async () => {
@@ -78,5 +79,20 @@ describe('getCurrentUserProfile', () => {
     expect(profile).toEqual({
       id: 'user-1', email: 'a@b.com', role: 'member', gym_id: null, name: null, avatar_url: null,
     });
+  });
+});
+
+describe('redeemInviteCode', () => {
+  it('returns no error on success', async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValue({ error: null });
+    const result = await redeemInviteCode('ABC123');
+    expect(supabase.rpc).toHaveBeenCalledWith('redeem_invite_code', { p_code: 'ABC123' });
+    expect(result).toEqual({ error: null });
+  });
+
+  it('returns the error message when the code is invalid', async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValue({ error: { message: 'Invalid invite code' } });
+    const result = await redeemInviteCode('BADCODE');
+    expect(result).toEqual({ error: 'Invalid invite code' });
   });
 });
