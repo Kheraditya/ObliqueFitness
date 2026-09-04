@@ -54,7 +54,7 @@ describe('ExerciseDetail', () => {
     await render(<ExerciseDetail />);
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
 
-    fireEvent.press(screen.getByText('Leaderboard'));
+    await fireEvent.press(screen.getByText('Leaderboard'));
 
     await waitFor(() => expect(screen.getByText('1. Alex')).toBeTruthy());
   });
