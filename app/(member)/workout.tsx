@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { Button } from '../../src/components/Button';
 import { listRoutines } from '../../src/features/routines/api';
+import { startSession } from '../../src/features/workout/api';
 import { typography, spacing, colors } from '../../src/theme';
 
 export default function Workout() {
@@ -13,10 +14,15 @@ export default function Workout() {
     listRoutines().then(setRoutines);
   }, []);
 
+  async function handleStartEmpty() {
+    const { id } = await startSession(null);
+    if (id) router.push(`/(member)/active-workout/${id}`);
+  }
+
   return (
     <Screen>
       <Text style={[typography.title, styles.heading]}>Workout</Text>
-      <Button title="Start Empty Workout" onPress={() => {}} disabled />
+      <Button title="Start Empty Workout" onPress={handleStartEmpty} />
       <Text style={[typography.title, styles.sectionHeading]}>Routines</Text>
       <Button title="New Routine" variant="secondary" onPress={() => router.push('/(member)/routines/new')} />
       <Button title="Explore" variant="secondary" onPress={() => {}} disabled />
