@@ -27,6 +27,10 @@ as $$
 declare
   v_code invite_codes%rowtype;
 begin
+  if auth.uid() is null then
+    raise exception 'Not authenticated';
+  end if;
+
   select * into v_code from invite_codes where code = p_code for update;
 
   if not found then
@@ -45,3 +49,6 @@ begin
   update invite_codes set uses_count = uses_count + 1 where id = v_code.id;
 end;
 $$;
+
+revoke execute on function redeem_invite_code(text) from public;
+grant execute on function redeem_invite_code(text) to authenticated;
