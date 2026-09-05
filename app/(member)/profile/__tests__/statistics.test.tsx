@@ -9,7 +9,7 @@ jest.mock('../../../../src/features/exercises/api', () => ({
 }));
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn() },
+  router: { push: jest.fn(), back: jest.fn() },
 }));
 
 import { getMuscleVolumes } from '../../../../src/features/progress/api';
@@ -25,7 +25,8 @@ describe('Statistics', () => {
     await render(<Statistics />);
 
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
-    expect(screen.getByText('Front')).toBeTruthy();
+    expect(screen.getByLabelText('male-body-front')).toBeTruthy();
+    expect(screen.getByLabelText('male-body-back')).toBeTruthy();
     expect(screen.toJSON()).not.toBeNull();
   });
 
@@ -56,5 +57,15 @@ describe('Statistics', () => {
 
     await fireEvent.press(screen.getByText('Monthly Report'));
     expect(router.push).toHaveBeenCalledWith('/(member)/profile/monthly-report');
+  });
+
+  it('navigates back when the back arrow is pressed', async () => {
+    (getMuscleVolumes as jest.Mock).mockResolvedValue([]);
+    (getLoggedExercises as jest.Mock).mockResolvedValue([]);
+
+    await render(<Statistics />);
+    await fireEvent.press(screen.getByTestId('back-button'));
+
+    expect(router.back).toHaveBeenCalled();
   });
 });

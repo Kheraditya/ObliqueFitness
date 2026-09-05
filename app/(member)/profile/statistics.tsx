@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Text, View, StyleSheet } from 'react-native';
+import { FlatList, Pressable, Text, View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '../../../src/components/Screen';
 import { ListItem } from '../../../src/components/ListItem';
 import { getMuscleVolumes } from '../../../src/features/progress/api';
 import { getLoggedExercises } from '../../../src/features/exercises/api';
 import { MuscleHeatmap } from '../../../src/features/progress/components/MuscleHeatmap';
-import { spacing, typography } from '../../../src/theme';
+import { colors, radius, spacing, typography } from '../../../src/theme';
 
 export default function Statistics() {
   const [muscleVolumes, setMuscleVolumes] = useState<{ muscle: string; volume: number }[]>([]);
@@ -19,10 +20,22 @@ export default function Statistics() {
 
   return (
     <Screen>
+      <View style={styles.header}>
+        <Pressable testID="back-button" onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+        </Pressable>
+        <Text style={typography.body}>Statistics</Text>
+        <View style={styles.headerSpacer} />
+      </View>
       <FlatList
         ListHeaderComponent={
           <>
-            <Text style={[typography.title, styles.heading]}>Statistics</Text>
+            <View style={styles.graphLabelRow}>
+              <Text style={typography.body}>Last 7 days body graph</Text>
+              <View style={styles.helpIcon}>
+                <Ionicons name="help" size={16} color={colors.textSecondary} />
+              </View>
+            </View>
             <MuscleHeatmap muscleVolumes={muscleVolumes} />
             <Text style={[typography.title, styles.sectionHeading]}>Exercises</Text>
           </>
@@ -71,9 +84,29 @@ export default function Statistics() {
 }
 
 const styles = StyleSheet.create({
-  heading: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: spacing.l,
-    marginBottom: spacing.l,
+    marginBottom: spacing.m,
+  },
+  headerSpacer: {
+    width: 22,
+  },
+  graphLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  helpIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionHeading: {
     fontSize: 20,

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { VictoryChart, VictoryBar, VictoryAxis, VictoryTheme } from 'victory-native';
+import { VictoryChart, VictoryBar, VictoryAxis } from 'victory-native';
 import { Screen } from '../../../src/components/Screen';
 import { PillTabs } from '../../../src/components/PillTabs';
 import { RadarChart } from '../../../src/features/progress/components/RadarChart';
@@ -76,10 +76,26 @@ export default function MonthlyReport() {
           {MONTH_NAMES[month]} {year}
         </Text>
         <View style={styles.chartCard}>
-          <VictoryChart theme={VictoryTheme.material} domainPadding={20} height={200}>
-            <VictoryAxis />
-            <VictoryAxis dependentAxis />
-            <VictoryBar data={chartData} />
+          <VictoryChart domainPadding={{ x: 16 }} height={220} padding={{ top: 16, bottom: 32, left: 16, right: 16 }}>
+            <VictoryAxis
+              style={{
+                axis: { stroke: colors.border },
+                tickLabels: { fill: colors.textSecondary, fontSize: 12 },
+              }}
+            />
+            <VictoryAxis
+              dependentAxis
+              style={{
+                axis: { stroke: 'transparent' },
+                grid: { stroke: colors.border, strokeDasharray: '2,4' },
+                tickLabels: { fill: colors.textSecondary, fontSize: 11 },
+              }}
+            />
+            <VictoryBar
+              data={chartData}
+              cornerRadius={{ topLeft: 4, topRight: 4 }}
+              style={{ data: { fill: colors.accent, width: 14 } }}
+            />
           </VictoryChart>
         </View>
         <PillTabs
