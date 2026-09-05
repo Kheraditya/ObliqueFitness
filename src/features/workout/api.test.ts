@@ -189,7 +189,10 @@ describe('getWorkoutSummary', () => {
     const countSelect = jest.fn(() => ({ not: countNot }));
 
     const recentLimit = jest.fn().mockResolvedValue({
-      data: [{ id: 's2', started_at: '2026-09-03T00:00:00Z', duration_seconds: 1800 }],
+      data: [
+        { id: 's2', started_at: '2026-09-03T00:00:00Z', duration_seconds: 1800, routines: { name: 'Push Day' } },
+        { id: 's3', started_at: '2026-09-01T00:00:00Z', duration_seconds: 900, routines: null },
+      ],
       error: null,
     });
     const recentOrder = jest.fn(() => ({ limit: recentLimit }));
@@ -206,7 +209,10 @@ describe('getWorkoutSummary', () => {
     expect(recentLimit).toHaveBeenCalledWith(5);
     expect(result).toEqual({
       count: 3,
-      recent: [{ id: 's2', startedAt: '2026-09-03T00:00:00Z', durationSeconds: 1800 }],
+      recent: [
+        { id: 's2', startedAt: '2026-09-03T00:00:00Z', durationSeconds: 1800, routineName: 'Push Day' },
+        { id: 's3', startedAt: '2026-09-01T00:00:00Z', durationSeconds: 900, routineName: null },
+      ],
     });
   });
 

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { signOut, getCurrentUserProfile } from '../../../src/features/auth/api';
 import { getWorkoutSummary } from '../../../src/features/workout/api';
@@ -9,13 +9,16 @@ import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
 import { DashboardTile } from '../../../src/components/DashboardTile';
 import { PillTabs } from '../../../src/components/PillTabs';
-import { ListItem } from '../../../src/components/ListItem';
 import { colors, radius, spacing, typography } from '../../../src/theme';
 
 function formatDuration(seconds: number | null): string {
   if (seconds == null) return '-';
   const minutes = Math.round(seconds / 60);
   return `${minutes} min`;
+}
+
+function formatDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function ProfileHome() {
@@ -27,16 +30,18 @@ export default function ProfileHome() {
   // same accepted trade-off already used on the routine detail screen.
   const [metric, setMetric] = useState('duration');
 
-  useEffect(() => {
-    getCurrentUserProfile().then((profile) => {
-      setName(profile?.name ?? null);
-      setAvatarUrl(profile?.avatar_url ?? null);
-    });
-    getWorkoutSummary().then((summary) => {
-      setWorkoutCount(summary.count);
-      setRecentSessions(summary.recent);
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getCurrentUserProfile().then((profile) => {
+        setName(profile?.name ?? null);
+        setAvatarUrl(profile?.avatar_url ?? null);
+      });
+      getWorkoutSummary().then((summary) => {
+        setWorkoutCount(summary.count);
+        setRecentSessions(summary.recent);
+      });
+    }, [])
+  );
 
   return (
     <Screen>
@@ -123,11 +128,13 @@ export default function ProfileHome() {
           </View>
         ) : (
           recentSessions.map((session) => (
-            <ListItem
-              key={session.id}
-              title={session.startedAt.slice(0, 10)}
-              trailing={formatDuration(session.durationSeconds)}
-            />
+            <View key={session.id} style={styles.workoutCard}>
+              <View>
+                <Text style={styles.workoutDate}>{formatDate(session.startedAt)}</Text>
+                <Text style={styles.workoutRoutine}>{session.routineName ?? 'Empty Workout'}</Text>
+              </View>
+              <Text style={styles.workoutDuration}>{formatDuration(session.durationSeconds)}</Text>
+            </View>
           ))
         )}
 
@@ -226,5 +233,33 @@ const styles = StyleSheet.create({
   startLink: {
     color: colors.accent,
     fontWeight: '600',
+  },
+  workoutCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.m,
+    padding: spacing.m,
+    marginBottom: spacing.s,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  workoutDate: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  workoutRoutine: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: spacing.xs,
+  },
+  workoutDuration: {
+    color: colors.textSecondary,
+    fontSize: 14,
   },
 });

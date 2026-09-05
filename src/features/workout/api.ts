@@ -151,6 +151,7 @@ export interface RecentSession {
   id: string;
   startedAt: string;
   durationSeconds: number | null;
+  routineName: string | null;
 }
 
 export interface WorkoutSummary {
@@ -162,6 +163,7 @@ interface RecentSessionRow {
   id: string;
   started_at: string;
   duration_seconds: number | null;
+  routines: { name: string } | null;
 }
 
 export async function getWorkoutSummary(): Promise<WorkoutSummary> {
@@ -172,7 +174,7 @@ export async function getWorkoutSummary(): Promise<WorkoutSummary> {
 
   const { data } = await supabase
     .from('workout_sessions')
-    .select('id, started_at, duration_seconds')
+    .select('id, started_at, duration_seconds, routines(name)')
     .not('ended_at', 'is', null)
     .order('started_at', { ascending: false })
     .limit(5);
@@ -181,7 +183,12 @@ export async function getWorkoutSummary(): Promise<WorkoutSummary> {
 
   return {
     count: count ?? 0,
-    recent: rows.map((row) => ({ id: row.id, startedAt: row.started_at, durationSeconds: row.duration_seconds })),
+    recent: rows.map((row) => ({
+      id: row.id,
+      startedAt: row.started_at,
+      durationSeconds: row.duration_seconds,
+      routineName: row.routines?.name ?? null,
+    })),
   };
 }
 

@@ -11,6 +11,7 @@ jest.mock('../../../../src/features/workout/api', () => ({
 
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), replace: jest.fn() },
+  useFocusEffect: (callback: () => void) => callback(),
 }));
 
 import { getCurrentUserProfile } from '../../../../src/features/auth/api';
@@ -47,17 +48,31 @@ describe('ProfileHome', () => {
     await waitFor(() => expect(screen.getByText('No workouts')).toBeTruthy());
   });
 
-  it('shows recent sessions when there are some', async () => {
+  it('shows recent sessions as cards with date, routine name, and duration', async () => {
     (getWorkoutSummary as jest.Mock).mockResolvedValue({
       count: 1,
-      recent: [{ id: 's1', startedAt: '2026-09-03T00:00:00Z', durationSeconds: 1800 }],
+      recent: [
+        { id: 's1', startedAt: '2026-09-03T10:00:00Z', durationSeconds: 1800, routineName: 'Push Day' },
+      ],
     });
 
     await render(<ProfileHome />);
 
-    await waitFor(() => expect(screen.getByText('2026-09-03')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Sep 3, 2026')).toBeTruthy());
+    expect(screen.getByText('Push Day')).toBeTruthy();
     expect(screen.getByText('30 min')).toBeTruthy();
     expect(screen.queryByText('No workouts')).toBeNull();
+  });
+
+  it('shows "Empty Workout" for a session with no routine', async () => {
+    (getWorkoutSummary as jest.Mock).mockResolvedValue({
+      count: 1,
+      recent: [{ id: 's1', startedAt: '2026-09-03T10:00:00Z', durationSeconds: 1800, routineName: null }],
+    });
+
+    await render(<ProfileHome />);
+
+    await waitFor(() => expect(screen.getByText('Empty Workout')).toBeTruthy());
   });
 
   it('navigates to Statistics when pressed', async () => {
