@@ -4,47 +4,32 @@ jest.mock('../../../../src/features/progress/api', () => ({
   getMuscleVolumes: jest.fn(),
 }));
 
-jest.mock('../../../../src/features/exercises/api', () => ({
-  getLoggedExercises: jest.fn(),
-}));
-
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
 }));
 
 import { getMuscleVolumes } from '../../../../src/features/progress/api';
-import { getLoggedExercises } from '../../../../src/features/exercises/api';
 import { router } from 'expo-router';
 import Statistics from '../statistics';
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 describe('Statistics', () => {
-  it('renders the heatmap and a list of logged exercises', async () => {
+  it('renders the header and the body heatmap', async () => {
     (getMuscleVolumes as jest.Mock).mockResolvedValue([{ muscle: 'chest', volume: 500 }]);
-    (getLoggedExercises as jest.Mock).mockResolvedValue([{ id: 'ex1', name: 'Bench Press' }]);
 
     await render(<Statistics />);
 
-    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
-    expect(screen.getByLabelText('male-body-front')).toBeTruthy();
+    await waitFor(() => expect(screen.getByLabelText('male-body-front')).toBeTruthy());
     expect(screen.getByLabelText('male-body-back')).toBeTruthy();
-    expect(screen.toJSON()).not.toBeNull();
-  });
-
-  it('navigates to the exercise detail screen when a row is pressed', async () => {
-    (getMuscleVolumes as jest.Mock).mockResolvedValue([]);
-    (getLoggedExercises as jest.Mock).mockResolvedValue([{ id: 'ex1', name: 'Bench Press' }]);
-
-    await render(<Statistics />);
-    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
-
-    await fireEvent.press(screen.getByText('Bench Press'));
-
-    expect(router.push).toHaveBeenCalledWith('/(member)/profile/exercises/ex1');
+    expect(screen.getByText('Last 7 days body graph')).toBeTruthy();
+    expect(screen.queryByText('Exercises')).toBeNull();
   });
 
   it('navigates to Muscle Distribution and Body Distribution and Monthly Report', async () => {
     (getMuscleVolumes as jest.Mock).mockResolvedValue([]);
-    (getLoggedExercises as jest.Mock).mockResolvedValue([]);
 
     await render(<Statistics />);
     await waitFor(() => expect(screen.getByText('Monthly Report')).toBeTruthy());
@@ -61,7 +46,6 @@ describe('Statistics', () => {
 
   it('navigates back when the back arrow is pressed', async () => {
     (getMuscleVolumes as jest.Mock).mockResolvedValue([]);
-    (getLoggedExercises as jest.Mock).mockResolvedValue([]);
 
     await render(<Statistics />);
     await fireEvent.press(screen.getByTestId('back-button'));
