@@ -13,14 +13,21 @@ jest.mock('expo-router', () => ({
 
 jest.mock('../../../src/features/workout/api', () => ({
   startSession: jest.fn(),
+  getActiveSession: jest.fn(),
+  getSessionExercises: jest.fn(),
+  discardSession: jest.fn(),
 }));
 
 import { listRoutines, deleteRoutine } from '../../../src/features/routines/api';
-import { startSession } from '../../../src/features/workout/api';
+import { startSession, getActiveSession, getSessionExercises, discardSession } from '../../../src/features/workout/api';
 import { router } from 'expo-router';
 import Workout from '../workout';
 
 describe('Workout', () => {
+  beforeEach(() => {
+    (getActiveSession as jest.Mock).mockResolvedValue(null);
+  });
+
   it('renders the routines list once loaded, with a count in the My Routines label', async () => {
     (listRoutines as jest.Mock).mockResolvedValue([{ id: 'r1', name: 'Push Day' }]);
 
@@ -138,5 +145,51 @@ describe('Workout', () => {
     expect(deleteRoutine).toHaveBeenCalledWith('r1');
     await waitFor(() => expect(screen.getByText('My Routines (0)')).toBeTruthy());
     alertSpy.mockRestore();
+  });
+
+  it('shows the active workout bar when a workout is in progress, and resumes it on press', async () => {
+    (router.push as jest.Mock).mockClear();
+    (listRoutines as jest.Mock).mockResolvedValue([]);
+    (getActiveSession as jest.Mock).mockResolvedValue({ id: 's1', startedAt: '2026-09-04T00:00:00Z' });
+    (getSessionExercises as jest.Mock).mockResolvedValue({ exercises: [], startedAt: '2026-09-04T00:00:00Z' });
+
+    await render(<Workout />);
+
+    await waitFor(() => expect(screen.getByText('No exercise')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('active-workout-bar'));
+
+    expect(router.push).toHaveBeenCalledWith('/(member)/active-workout/s1');
+  });
+
+  it('does not show the active workout bar when there is no session in progress', async () => {
+    (listRoutines as jest.Mock).mockResolvedValue([]);
+    (getActiveSession as jest.Mock).mockResolvedValue(null);
+
+    await render(<Workout />);
+    await waitFor(() => expect(screen.getByText('Start Empty Workout')).toBeTruthy());
+
+    expect(screen.queryByTestId('active-workout-bar')).toBeNull();
+  });
+
+  it('discards the in-progress workout and hides the bar when confirmed from it', async () => {
+    (listRoutines as jest.Mock).mockResolvedValue([]);
+    const activeSession = { id: 's1', startedAt: '2026-09-04T00:00:00Z' };
+    let discarded = false;
+    (getActiveSession as jest.Mock).mockImplementation(() => Promise.resolve(discarded ? null : activeSession));
+    (getSessionExercises as jest.Mock).mockResolvedValue({ exercises: [], startedAt: '2026-09-04T00:00:00Z' });
+    (discardSession as jest.Mock).mockImplementation(async () => {
+      discarded = true;
+      return { error: null };
+    });
+
+    await render(<Workout />);
+    await waitFor(() => expect(screen.getByTestId('active-workout-bar')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('active-workout-bar-discard'));
+    await fireEvent.press(screen.getByTestId('confirm-modal-confirm'));
+
+    expect(discardSession).toHaveBeenCalledWith('s1');
+    await waitFor(() => expect(screen.queryByTestId('active-workout-bar')).toBeNull());
   });
 });

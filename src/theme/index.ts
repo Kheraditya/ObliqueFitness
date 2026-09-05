@@ -1,12 +1,13 @@
 export const colors = {
-  background: '#000000',
-  surface: '#1C1C1E',
-  surfaceElevated: '#2C2C2E',
-  border: '#38383A',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#8E8E93',
-  accent: '#0A84FF',
-  danger: '#FF453A',
+  background: "#000000",
+  surface: "#1C1C1E",
+  surfaceElevated: "#2C2C2E",
+  border: "#38383A",
+  textPrimary: "#FFFFFF",
+  textSecondary: "#8E8E93",
+  accent: "#0A84FF",
+  danger: "#FF453A",
+  success: "#34C759",
 };
 
 export const spacing = {
@@ -27,29 +28,29 @@ export const radius = {
 export const typography = {
   title: {
     fontSize: 32,
-    fontWeight: '700' as const,
+    fontWeight: "700" as const,
     color: colors.textPrimary,
   },
   subtitle: {
     fontSize: 16,
-    fontWeight: '400' as const,
+    fontWeight: "400" as const,
     color: colors.textSecondary,
   },
   label: {
     fontSize: 13,
-    fontWeight: '500' as const,
+    fontWeight: "500" as const,
     color: colors.textSecondary,
   },
   body: {
     fontSize: 16,
-    fontWeight: '400' as const,
+    fontWeight: "400" as const,
     color: colors.textPrimary,
   },
   // The small centered title used in a HeaderBar's center slot (e.g. "Workout Settings",
   // "Create Routine") -- distinct from the large left-aligned `title` used on tab screens.
   headerTitle: {
     fontSize: 17,
-    fontWeight: '600' as const,
+    fontWeight: "600" as const,
     color: colors.textPrimary,
   },
 };

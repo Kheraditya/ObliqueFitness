@@ -1,5 +1,5 @@
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { BackHandler } from 'react-native';
 
 jest.mock('../../../../src/features/workout/api', () => ({
   getSessionExercises: jest.fn(),
@@ -204,33 +204,35 @@ describe('ActiveWorkout', () => {
     (getSessionExercises as jest.Mock).mockResolvedValue({ exercises: [], startedAt: '2026-09-04T00:00:00Z' });
     (getLoggedSets as jest.Mock).mockResolvedValue([]);
     (discardSession as jest.Mock).mockResolvedValue({ error: null });
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
-      buttons?.find((b) => b.text === 'Discard')?.onPress?.();
-    });
 
     await render(<ActiveWorkout />);
     await waitFor(() => expect(screen.getByText('Discard Workout')).toBeTruthy());
 
     await fireEvent.press(screen.getByText('Discard Workout'));
+    await waitFor(() =>
+      expect(screen.getByText('This will permanently delete this workout and all logged sets.')).toBeTruthy()
+    );
+    await fireEvent.press(screen.getByTestId('confirm-modal-confirm'));
 
     await waitFor(() => expect(discardSession).toHaveBeenCalledWith('s1'));
     expect(router.replace).toHaveBeenCalledWith('/(member)/workout');
-    alertSpy.mockRestore();
   });
 
   it('does not discard the session unless the confirmation dialog is confirmed', async () => {
     (getSessionExercises as jest.Mock).mockResolvedValue({ exercises: [], startedAt: '2026-09-04T00:00:00Z' });
     (getLoggedSets as jest.Mock).mockResolvedValue([]);
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
     await render(<ActiveWorkout />);
     await waitFor(() => expect(screen.getByText('Discard Workout')).toBeTruthy());
 
     await fireEvent.press(screen.getByText('Discard Workout'));
+    await waitFor(() =>
+      expect(screen.getByText('This will permanently delete this workout and all logged sets.')).toBeTruthy()
+    );
+    await fireEvent.press(screen.getByTestId('confirm-modal-cancel'));
 
-    expect(alertSpy).toHaveBeenCalled();
     expect(discardSession).not.toHaveBeenCalled();
-    alertSpy.mockRestore();
+    expect(screen.queryByText('This will permanently delete this workout and all logged sets.')).toBeNull();
   });
 
   it('navigates to workout settings when Settings is pressed', async () => {
@@ -325,5 +327,36 @@ describe('ActiveWorkout', () => {
     });
 
     expect(activateKeepAwakeAsync).not.toHaveBeenCalled();
+  });
+
+  it('navigates to the workout tab without discarding when the header title is pressed', async () => {
+    (getSessionExercises as jest.Mock).mockResolvedValue({ exercises: [], startedAt: '2026-09-04T00:00:00Z' });
+    (getLoggedSets as jest.Mock).mockResolvedValue([]);
+
+    await render(<ActiveWorkout />);
+    await waitFor(() => expect(screen.getByText('Log Workout')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('Log Workout'));
+
+    expect(router.replace).toHaveBeenCalledWith('/(member)/workout');
+    expect(discardSession).not.toHaveBeenCalled();
+  });
+
+  it('navigates to the workout tab without discarding when the hardware back button is pressed', async () => {
+    (getSessionExercises as jest.Mock).mockResolvedValue({ exercises: [], startedAt: '2026-09-04T00:00:00Z' });
+    (getLoggedSets as jest.Mock).mockResolvedValue([]);
+    const addEventListenerSpy = jest.spyOn(BackHandler, 'addEventListener');
+
+    await render(<ActiveWorkout />);
+    await waitFor(() => expect(getSessionExercises).toHaveBeenCalled());
+
+    const registeredHandler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === 'hardwareBackPress')?.[1];
+    expect(registeredHandler).toBeDefined();
+    const handled = registeredHandler?.({ type: 'hardwareBackPress', timeStamp: Date.now() });
+
+    expect(handled).toBe(true);
+    expect(router.replace).toHaveBeenCalledWith('/(member)/workout');
+    expect(discardSession).not.toHaveBeenCalled();
+    addEventListenerSpy.mockRestore();
   });
 });

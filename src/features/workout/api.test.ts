@@ -6,7 +6,18 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { startSession, discardSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession, getWorkoutSummary, getWorkoutDates } from './api';
+import {
+  startSession,
+  discardSession,
+  getActiveSession,
+  getSessionExercises,
+  getLoggedSets,
+  logSet,
+  updateWorkoutSet,
+  finishSession,
+  getWorkoutSummary,
+  getWorkoutDates,
+} from './api';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -57,6 +68,55 @@ describe('discardSession', () => {
     const result = await discardSession('s1');
 
     expect(result).toEqual({ error: 'boom' });
+  });
+});
+
+describe('getActiveSession', () => {
+  it('returns null when there is no session', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+
+    const result = await getActiveSession();
+
+    expect(result).toBeNull();
+  });
+
+  it('returns the most recent unfinished session for the current user', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: { id: 's1', started_at: '2026-09-04T00:00:00Z' },
+      error: null,
+    });
+    const limit = jest.fn(() => ({ maybeSingle }));
+    const order = jest.fn(() => ({ limit }));
+    const is = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ is }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getActiveSession();
+
+    expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
+    expect(eq).toHaveBeenCalledWith('user_id', 'u1');
+    expect(is).toHaveBeenCalledWith('ended_at', null);
+    expect(order).toHaveBeenCalledWith('started_at', { ascending: false });
+    expect(result).toEqual({ id: 's1', startedAt: '2026-09-04T00:00:00Z' });
+  });
+
+  it('returns null when there is no unfinished session', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+
+    const maybeSingle = jest.fn().mockResolvedValue({ data: null, error: null });
+    const limit = jest.fn(() => ({ maybeSingle }));
+    const order = jest.fn(() => ({ limit }));
+    const is = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ is }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getActiveSession();
+
+    expect(result).toBeNull();
   });
 });
 

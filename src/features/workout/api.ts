@@ -50,6 +50,35 @@ export async function discardSession(sessionId: string): Promise<{ error: string
   return { error: error ? error.message : null };
 }
 
+export interface ActiveSession {
+  id: string;
+  startedAt: string;
+}
+
+// The most recent session this user has started but not yet finished (ended_at is still null),
+// used to surface a resumable "workout in progress" bar when the user navigates away from it
+// without finishing or discarding.
+export async function getActiveSession(): Promise<ActiveSession | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) return null;
+
+  const { data } = await supabase
+    .from('workout_sessions')
+    .select('id, started_at')
+    .eq('user_id', session.user.id)
+    .is('ended_at', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+  const row = data as { id: string; started_at: string };
+  return { id: row.id, startedAt: row.started_at };
+}
+
 export async function getSessionExercises(
   sessionId: string
 ): Promise<{ exercises: SessionExercise[]; startedAt: string }> {
