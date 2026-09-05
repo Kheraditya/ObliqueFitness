@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '../../../src/components/Screen';
 import { PillTabs } from '../../../src/components/PillTabs';
 import { ErrorText } from '../../../src/components/ErrorText';
 import { getCurrentUserProfile, updateProfile } from '../../../src/features/auth/api';
+import { toLocalDateString, parseLocalDateString } from '../../../src/lib/dates';
 import { colors, radius, spacing, typography } from '../../../src/theme';
 
 export default function EditProfile() {
@@ -17,6 +19,14 @@ export default function EditProfile() {
   const [birthday, setBirthday] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  function handleDateChange(event: DateTimePickerEvent, selectedDate?: Date) {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (event.type === 'set' && selectedDate) {
+      setBirthday(toLocalDateString(selectedDate));
+    }
+  }
 
   useEffect(() => {
     getCurrentUserProfile().then((profile) => {
@@ -59,7 +69,12 @@ export default function EditProfile() {
           <Text style={styles.doneText}>Done</Text>
         </Pressable>
       </View>
-      <ScrollView>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? spacing.xl : 0}
+      >
+      <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.avatarSection}>
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={styles.avatar} />
@@ -119,20 +134,29 @@ export default function EditProfile() {
         />
         <View style={styles.field}>
           <Text style={typography.body}>Birthday</Text>
-          <TextInput
-            style={styles.fieldInput}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={colors.textSecondary}
-            value={birthday}
-            onChangeText={setBirthday}
-          />
+          <Pressable onPress={() => setShowDatePicker(true)}>
+            <Text style={styles.fieldInput}>{birthday || 'Select date'}</Text>
+          </Pressable>
         </View>
+        {showDatePicker && (
+          <DateTimePicker
+            value={birthday ? parseLocalDateString(birthday) : new Date(2000, 0, 1)}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            maximumDate={new Date()}
+            onChange={handleDateChange}
+          />
+        )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -9,6 +9,18 @@ jest.mock('expo-router', () => ({
   router: { back: jest.fn() },
 }));
 
+jest.mock('@react-native-community/datetimepicker', () => {
+  const { Pressable, Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ onChange }: { onChange: (event: { type: string }, date?: Date) => void }) => (
+      <Pressable testID="mock-date-picker" onPress={() => onChange({ type: 'set' }, new Date(2003, 5, 16))}>
+        <Text>Mock Date Picker</Text>
+      </Pressable>
+    ),
+  };
+});
+
 import { getCurrentUserProfile, updateProfile } from '../../../../src/features/auth/api';
 import { router } from 'expo-router';
 import EditProfile from '../edit';
@@ -80,5 +92,20 @@ describe('EditProfile', () => {
     await fireEvent.press(screen.getByText('Done'));
 
     await waitFor(() => expect(updateProfile).toHaveBeenCalledWith(expect.objectContaining({ sex: 'male' })));
+  });
+
+  it('opens the date picker and sets the picked date as the birthday', async () => {
+    (updateProfile as jest.Mock).mockResolvedValue({ error: null });
+
+    await render(<EditProfile />);
+    await waitFor(() => expect(screen.getByText('Select date')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('Select date'));
+    await fireEvent.press(screen.getByTestId('mock-date-picker'));
+
+    await waitFor(() => expect(screen.getByText('2003-06-16')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('Done'));
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledWith(expect.objectContaining({ birthday: '2003-06-16' })));
   });
 });
