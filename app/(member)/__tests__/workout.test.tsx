@@ -30,6 +30,16 @@ describe('Workout', () => {
     expect(screen.getByText('My Routines (1)')).toBeTruthy();
   });
 
+  it('renders the exercise preview beneath a routine name', async () => {
+    (listRoutines as jest.Mock).mockResolvedValue([
+      { id: 'r1', name: 'Push Day', exercisePreview: 'Bench Press, Overhead Press' },
+    ]);
+
+    await render(<Workout />);
+
+    await waitFor(() => expect(screen.getByText('Bench Press, Overhead Press')).toBeTruthy());
+  });
+
   it('collapses and expands the routines list when the My Routines row is pressed', async () => {
     (listRoutines as jest.Mock).mockResolvedValue([{ id: 'r1', name: 'Push Day' }]);
 

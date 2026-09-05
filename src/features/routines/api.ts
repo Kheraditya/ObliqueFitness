@@ -11,9 +11,30 @@ interface RoutineExerciseRow {
   exercises: { name: string } | null;
 }
 
-export async function listRoutines(): Promise<{ id: string; name: string }[]> {
-  const { data } = await supabase.from('routines').select('id, name').order('name', { ascending: true });
-  return (data ?? []) as { id: string; name: string }[];
+interface RoutineListRow {
+  id: string;
+  name: string;
+  routine_exercises: { order: number; exercises: { name: string } | null }[];
+}
+
+export async function listRoutines(): Promise<{ id: string; name: string; exercisePreview: string }[]> {
+  const { data } = await supabase
+    .from('routines')
+    .select('id, name, routine_exercises(order, exercises(name))')
+    .order('name', { ascending: true });
+
+  const rows = (data ?? []) as unknown as RoutineListRow[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    exercisePreview: row.routine_exercises
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((re) => re.exercises?.name)
+      .filter((exerciseName): exerciseName is string => Boolean(exerciseName))
+      .join(', '),
+  }));
 }
 
 export async function getRoutine(id: string): Promise<Routine | null> {

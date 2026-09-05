@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.s,
     backgroundColor: colors.surface,
-    borderRadius: radius.m,
+    borderRadius: radius.l,
     padding: spacing.m,
   },
   label: {

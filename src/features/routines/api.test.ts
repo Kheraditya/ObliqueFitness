@@ -20,17 +20,42 @@ beforeEach(() => {
 });
 
 describe('listRoutines', () => {
-  it('returns routines ordered by name', async () => {
-    const order = jest.fn().mockResolvedValue({ data: [{ id: 'r1', name: 'Push Day' }], error: null });
+  it('returns routines ordered by name, with an ordered exercise-name preview', async () => {
+    const order = jest.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'r1',
+          name: 'Push Day',
+          routine_exercises: [
+            { order: 1, exercises: { name: 'Overhead Press' } },
+            { order: 0, exercises: { name: 'Bench Press' } },
+          ],
+        },
+      ],
+      error: null,
+    });
     const select = jest.fn(() => ({ order }));
     (supabase.from as jest.Mock).mockReturnValue({ select });
 
     const result = await listRoutines();
 
     expect(supabase.from).toHaveBeenCalledWith('routines');
-    expect(select).toHaveBeenCalledWith('id, name');
+    expect(select).toHaveBeenCalledWith('id, name, routine_exercises(order, exercises(name))');
     expect(order).toHaveBeenCalledWith('name', { ascending: true });
-    expect(result).toEqual([{ id: 'r1', name: 'Push Day' }]);
+    expect(result).toEqual([{ id: 'r1', name: 'Push Day', exercisePreview: 'Bench Press, Overhead Press' }]);
+  });
+
+  it('returns an empty preview for a routine with no exercises', async () => {
+    const order = jest.fn().mockResolvedValue({
+      data: [{ id: 'r1', name: 'Push Day', routine_exercises: [] }],
+      error: null,
+    });
+    const select = jest.fn(() => ({ order }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await listRoutines();
+
+    expect(result).toEqual([{ id: 'r1', name: 'Push Day', exercisePreview: '' }]);
   });
 });
 

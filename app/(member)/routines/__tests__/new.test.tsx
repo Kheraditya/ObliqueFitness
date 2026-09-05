@@ -19,6 +19,10 @@ import { useLocalSearchParams, router } from 'expo-router';
 import NewRoutine from '../new';
 
 describe('NewRoutine', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('adds an exercise passed via addExerciseId and saves the routine', async () => {
     (useLocalSearchParams as jest.Mock).mockReturnValue({ addExerciseId: 'ex1' });
     (getExercise as jest.Mock).mockResolvedValue({ id: 'ex1', name: 'Bench Press' });
@@ -74,5 +78,14 @@ describe('NewRoutine', () => {
     await fireEvent.press(screen.getByText('Cancel'));
 
     expect(router.back).toHaveBeenCalled();
+  });
+
+  it('does not save while the routine title is empty', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
+
+    await render(<NewRoutine />);
+    await fireEvent.press(screen.getByText('Save'));
+
+    expect(createRoutine).not.toHaveBeenCalled();
   });
 });

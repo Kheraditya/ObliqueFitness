@@ -1,4 +1,4 @@
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Pressable, Text, View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../theme';
 
@@ -12,9 +12,21 @@ interface ButtonProps {
   // Overrides the variant's default text (and icon) color -- e.g. a danger-red label on an
   // otherwise ordinary "dark" button, without needing a whole new variant for one color.
   textColor?: string;
+  // Escape hatch for one-off layout overrides -- e.g. zeroing out the default marginTop when a
+  // Button sits inline next to an icon in a header row, instead of stacked below other content.
+  style?: StyleProp<ViewStyle>;
 }
 
-export function Button({ title, onPress, variant = 'primary', disabled = false, icon, align = 'center', textColor }: ButtonProps) {
+export function Button({
+  title,
+  onPress,
+  variant = 'primary',
+  disabled = false,
+  icon,
+  align = 'center',
+  textColor,
+  style,
+}: ButtonProps) {
   const isPrimary = variant === 'primary';
   const isDark = variant === 'dark';
   const defaultTextColor = isPrimary ? colors.textPrimary : isDark ? colors.textPrimary : colors.accent;
@@ -29,6 +41,7 @@ export function Button({ title, onPress, variant = 'primary', disabled = false, 
         align === 'left' && styles.alignLeft,
         pressed && styles.pressed,
         disabled && styles.disabled,
+        style,
       ]}
     >
       <View style={styles.content}>
@@ -41,7 +54,7 @@ export function Button({ title, onPress, variant = 'primary', disabled = false, 
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: radius.full,
+    borderRadius: radius.l,
     paddingVertical: spacing.m,
     alignItems: 'center',
     justifyContent: 'center',

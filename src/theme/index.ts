@@ -45,4 +45,11 @@ export const typography = {
     fontWeight: '400' as const,
     color: colors.textPrimary,
   },
+  // The small centered title used in a HeaderBar's center slot (e.g. "Workout Settings",
+  // "Create Routine") -- distinct from the large left-aligned `title` used on tab screens.
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+  },
 };

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Alert, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Body from 'react-native-body-highlighter';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Screen } from '../../../src/components/Screen';
+import { HeaderBar } from '../../../src/components/HeaderBar';
 import { Button } from '../../../src/components/Button';
 import { ErrorText } from '../../../src/components/ErrorText';
 import {
@@ -163,17 +164,24 @@ export default function ActiveWorkout() {
   const volume = sets.reduce((sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0), 0);
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Ionicons name="chevron-down" size={18} color={colors.textPrimary} />
-          <Text style={typography.body}>Log Workout</Text>
-        </View>
-        <View style={styles.headerActions}>
-          <Ionicons name="time-outline" size={22} color={colors.textPrimary} style={styles.clockIcon} />
-          <Button title="Finish" onPress={handleFinish} />
-        </View>
-      </View>
+    <Screen
+      header={
+        <HeaderBar
+          left={
+            <View style={styles.titleRow}>
+              <Ionicons name="chevron-down" size={18} color={colors.textPrimary} />
+              <Text style={typography.headerTitle}>Log Workout</Text>
+            </View>
+          }
+          right={
+            <View style={styles.headerActions}>
+              <Ionicons name="stopwatch-outline" size={24} color={colors.textPrimary} />
+              <Button title="Finish" onPress={handleFinish} style={styles.noMarginTop} />
+            </View>
+          }
+        />
+      }
+    >
       {error && <ErrorText>{error}</ErrorText>}
 
       <View style={styles.statsRow}>
@@ -201,16 +209,27 @@ export default function ActiveWorkout() {
 
       {exercises.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="barbell-outline" size={40} color={colors.textSecondary} />
+          <Ionicons name="barbell-outline" size={52} color={colors.textSecondary} />
           <Text style={styles.emptyTitle}>Get started</Text>
           <Text style={styles.emptySubtitle}>Add an exercise to start your workout</Text>
           <Button title="Add Exercise" icon="add" onPress={handleAddExercise} />
           <View style={styles.footerRow}>
             <View style={styles.footerButton}>
-              <Button title="Settings" variant="dark" onPress={() => router.push('/(member)/active-workout/settings')} />
+              <Button
+                title="Settings"
+                variant="dark"
+                onPress={() => router.push('/(member)/active-workout/settings')}
+                style={styles.noMarginTop}
+              />
             </View>
             <View style={styles.footerButton}>
-              <Button title="Discard Workout" variant="dark" textColor={colors.danger} onPress={handleDiscard} />
+              <Button
+                title="Discard Workout"
+                variant="dark"
+                textColor={colors.danger}
+                onPress={handleDiscard}
+                style={styles.noMarginTop}
+              />
             </View>
           </View>
         </View>
@@ -231,10 +250,21 @@ export default function ActiveWorkout() {
           <Button title="Add Exercise" variant="secondary" onPress={handleAddExercise} />
           <View style={styles.footerRow}>
             <View style={styles.footerButton}>
-              <Button title="Settings" variant="dark" onPress={() => router.push('/(member)/active-workout/settings')} />
+              <Button
+                title="Settings"
+                variant="dark"
+                onPress={() => router.push('/(member)/active-workout/settings')}
+                style={styles.noMarginTop}
+              />
             </View>
             <View style={styles.footerButton}>
-              <Button title="Discard Workout" variant="dark" textColor={colors.danger} onPress={handleDiscard} />
+              <Button
+                title="Discard Workout"
+                variant="dark"
+                textColor={colors.danger}
+                onPress={handleDiscard}
+                style={styles.noMarginTop}
+              />
             </View>
           </View>
         </>
@@ -244,12 +274,8 @@ export default function ActiveWorkout() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.l,
-    marginBottom: spacing.m,
+  noMarginTop: {
+    marginTop: 0,
   },
   titleRow: {
     flexDirection: 'row',
@@ -261,14 +287,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.m,
   },
-  clockIcon: {
-    marginTop: spacing.xs,
-  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: spacing.m,
     paddingBottom: spacing.m,
+    marginHorizontal: -spacing.l,
+    paddingHorizontal: spacing.l,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     marginBottom: spacing.m,
@@ -280,12 +306,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: '700',
   },
   statValueAccent: {
     color: colors.accent,
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: '700',
   },
   miniBodyRow: {
@@ -299,20 +325,20 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: colors.textPrimary,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    marginTop: spacing.s,
+    marginTop: spacing.m,
   },
   emptySubtitle: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
     marginBottom: spacing.m,
   },
   footerRow: {
     flexDirection: 'row',
-    gap: spacing.s,
+    gap: spacing.m,
     width: '100%',
-    marginTop: spacing.s,
+    marginTop: spacing.m,
   },
   footerButton: {
     flex: 1,

@@ -3,13 +3,14 @@ import { Pressable, ScrollView, Text, TextInput, View, StyleSheet } from 'react-
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '../../../src/components/Screen';
+import { HeaderBar } from '../../../src/components/HeaderBar';
 import { Button } from '../../../src/components/Button';
 import { ErrorText } from '../../../src/components/ErrorText';
 import { RoutineExerciseList } from '../../../src/features/routines/components/RoutineExerciseList';
 import { createRoutine } from '../../../src/features/routines/api';
 import { getExercise } from '../../../src/features/exercises/api';
 import type { RoutineExerciseDraft } from '../../../src/features/routines/types';
-import { colors, spacing, typography } from '../../../src/theme';
+import { colors, radius, spacing, typography } from '../../../src/theme';
 
 export default function NewRoutine() {
   const { addExerciseId } = useLocalSearchParams<{ addExerciseId?: string }>();
@@ -29,7 +30,10 @@ export default function NewRoutine() {
     });
   }, [addExerciseId]);
 
+  const canSave = name.trim().length > 0;
+
   async function handleSave() {
+    if (!canSave) return;
     const result = await createRoutine(name, exercises);
     if (result.error) {
       setError(result.error);
@@ -43,17 +47,23 @@ export default function NewRoutine() {
   }
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.headerAction}>Cancel</Text>
-        </Pressable>
-        <Text style={typography.body}>Create Routine</Text>
-        <Pressable onPress={handleSave}>
-          <Text style={styles.headerAction}>Save</Text>
-        </Pressable>
-      </View>
-
+    <Screen
+      header={
+        <HeaderBar
+          left={
+            <Pressable onPress={() => router.back()} hitSlop={8}>
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+          }
+          center={<Text style={typography.headerTitle}>Create Routine</Text>}
+          right={
+            <Pressable onPress={handleSave} disabled={!canSave} hitSlop={8} style={[styles.savePill, canSave && styles.savePillActive]}>
+              <Text style={[styles.saveText, canSave && styles.saveTextActive]}>Save</Text>
+            </Pressable>
+          }
+        />
+      }
+    >
       <TextInput
         style={styles.titleInput}
         placeholder="Routine title"
@@ -66,12 +76,12 @@ export default function NewRoutine() {
 
       {exercises.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="barbell-outline" size={40} color={colors.textSecondary} />
+          <Ionicons name="barbell-outline" size={52} color={colors.textSecondary} />
           <Text style={styles.emptySubtitle}>Get started by adding an exercise to your routine.</Text>
           <Button title="Add exercise" icon="add" onPress={handleAddExercise} />
         </View>
       ) : (
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false}>
           <RoutineExerciseList exercises={exercises} onChange={setExercises} />
           <Button title="Add Exercise" variant="secondary" onPress={handleAddExercise} />
         </ScrollView>
@@ -81,23 +91,34 @@ export default function NewRoutine() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.l,
-    marginBottom: spacing.m,
-  },
-  headerAction: {
+  cancelText: {
     color: colors.accent,
     fontSize: 16,
+    fontWeight: '400',
+  },
+  savePill: {
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    borderRadius: radius.m,
+    backgroundColor: colors.surfaceElevated,
+  },
+  savePillActive: {
+    backgroundColor: colors.accent,
+  },
+  saveText: {
+    color: colors.textSecondary,
+    fontSize: 15,
     fontWeight: '600',
   },
+  saveTextActive: {
+    color: colors.textPrimary,
+  },
   titleInput: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '600',
     color: colors.textPrimary,
     paddingVertical: spacing.m,
+    marginTop: spacing.l,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     marginBottom: spacing.m,
@@ -110,7 +131,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
     textAlign: 'center',
     marginBottom: spacing.m,
     paddingHorizontal: spacing.l,

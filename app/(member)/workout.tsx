@@ -9,10 +9,10 @@ import { DashboardTile } from '../../src/components/DashboardTile';
 import { RoutineCard } from '../../src/features/routines/components/RoutineCard';
 import { listRoutines, deleteRoutine } from '../../src/features/routines/api';
 import { startSession } from '../../src/features/workout/api';
-import { colors, typography, spacing } from '../../src/theme';
+import { colors, radius, typography, spacing } from '../../src/theme';
 
 export default function Workout() {
-  const [routines, setRoutines] = useState<{ id: string; name: string }[]>([]);
+  const [routines, setRoutines] = useState<{ id: string; name: string; exercisePreview: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [routinesExpanded, setRoutinesExpanded] = useState(true);
 
@@ -54,7 +54,9 @@ export default function Workout() {
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={typography.title}>Workout</Text>
-          <Ionicons name="chevron-down" size={18} color={colors.textPrimary} />
+          <View style={styles.chevronBadge}>
+            <Ionicons name="chevron-down" size={16} color={colors.textPrimary} />
+          </View>
         </View>
         <Pressable onPress={refresh} hitSlop={8}>
           <Ionicons name="refresh" size={22} color={colors.textPrimary} />
@@ -64,7 +66,12 @@ export default function Workout() {
       {error && <ErrorText>{error}</ErrorText>}
       <View style={styles.sectionHeadingRow}>
         <Text style={[typography.title, styles.sectionHeading]}>Routines</Text>
-        <Ionicons name="folder-outline" size={20} color={colors.textSecondary} />
+        <View style={styles.folderIconWrap}>
+          <Ionicons name="folder-outline" size={20} color={colors.textSecondary} />
+          <View style={styles.folderAddBadge}>
+            <Ionicons name="add" size={10} color={colors.textPrimary} />
+          </View>
+        </View>
       </View>
       <View style={styles.tileRow}>
         <DashboardTile label="New Routine" icon="clipboard-outline" onPress={() => router.push('/(member)/routines/new')} />
@@ -72,16 +79,17 @@ export default function Workout() {
       </View>
 
       <Pressable style={styles.myRoutinesRow} onPress={() => setRoutinesExpanded((prev) => !prev)}>
-        <Ionicons name={routinesExpanded ? 'chevron-down' : 'chevron-forward'} size={16} color={colors.textSecondary} />
+        <Ionicons name={routinesExpanded ? 'caret-down' : 'caret-forward'} size={13} color={colors.textSecondary} />
         <Text style={styles.myRoutinesLabel}>My Routines ({routines.length})</Text>
       </Pressable>
 
       {routinesExpanded && (
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false}>
           {routines.map((routine) => (
             <RoutineCard
               key={routine.id}
               name={routine.name}
+              exercisePreview={routine.exercisePreview}
               onStart={() => handleStartRoutine(routine.id)}
               onEdit={() => router.push(`/(member)/routines/${routine.id}/edit`)}
               onDelete={() => handleDeleteRoutine(routine.id)}
@@ -99,12 +107,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: spacing.l,
-    marginBottom: spacing.s,
+    marginBottom: spacing.m,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.s,
+  },
+  chevronBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionHeadingRow: {
     flexDirection: 'row',
@@ -116,6 +132,21 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 20,
   },
+  folderIconWrap: {
+    width: 24,
+    height: 24,
+  },
+  folderAddBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    width: 14,
+    height: 14,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tileRow: {
     flexDirection: 'row',
     gap: spacing.s,
@@ -124,8 +155,8 @@ const styles = StyleSheet.create({
   myRoutinesRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.s,
+    gap: spacing.s,
+    marginBottom: spacing.m,
   },
   myRoutinesLabel: {
     color: colors.textSecondary,

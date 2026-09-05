@@ -3,6 +3,24 @@ import { Alert } from 'react-native';
 import { RoutineCard } from '../RoutineCard';
 
 describe('RoutineCard', () => {
+  it('renders the exercise preview when provided, and omits it when absent', async () => {
+    const { rerender } = await render(
+      <RoutineCard
+        name="Push Day"
+        exercisePreview="Bench Press, Overhead Press"
+        onStart={jest.fn()}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('Bench Press, Overhead Press')).toBeTruthy();
+
+    await rerender(<RoutineCard name="Push Day" onStart={jest.fn()} onEdit={jest.fn()} onDelete={jest.fn()} />);
+
+    expect(screen.queryByText('Bench Press, Overhead Press')).toBeNull();
+  });
+
   it('calls onStart when Start Routine is pressed', async () => {
     const onStart = jest.fn();
     await render(<RoutineCard name="Push Day" onStart={onStart} onEdit={jest.fn()} onDelete={jest.fn()} />);

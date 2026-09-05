@@ -1,16 +1,17 @@
 import { Alert, Pressable, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../../components/Button';
-import { colors, radius, spacing, typography } from '../../../theme';
+import { colors, radius, spacing } from '../../../theme';
 
 interface RoutineCardProps {
   name: string;
+  exercisePreview?: string;
   onStart: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function RoutineCard({ name, onStart, onEdit, onDelete }: RoutineCardProps) {
+export function RoutineCard({ name, exercisePreview, onStart, onEdit, onDelete }: RoutineCardProps) {
   function handleMenu() {
     Alert.alert(name, undefined, [
       { text: 'Edit Routine', onPress: onEdit },
@@ -22,12 +23,19 @@ export function RoutineCard({ name, onStart, onEdit, onDelete }: RoutineCardProp
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={[typography.body, styles.name]}>{name}</Text>
+        <View style={styles.textCol}>
+          <Text style={styles.name}>{name}</Text>
+          {!!exercisePreview && (
+            <Text style={styles.preview} numberOfLines={2}>
+              {exercisePreview}
+            </Text>
+          )}
+        </View>
         <Pressable onPress={handleMenu} hitSlop={8} testID={`routine-menu-${name}`}>
           <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
         </Pressable>
       </View>
-      <Button title="Start Routine" onPress={onStart} />
+      <Button title="Start Routine" onPress={onStart} style={styles.noMarginTop} />
     </View>
   );
 }
@@ -35,17 +43,32 @@ export function RoutineCard({ name, onStart, onEdit, onDelete }: RoutineCardProp
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.m,
+    borderRadius: radius.l,
     padding: spacing.m,
-    marginBottom: spacing.s,
-    gap: spacing.s,
+    marginBottom: spacing.m,
+    gap: spacing.m,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    gap: spacing.s,
+  },
+  textCol: {
+    flex: 1,
   },
   name: {
-    flex: 1,
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  preview: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 19,
+    marginTop: spacing.xs,
+  },
+  noMarginTop: {
+    marginTop: 0,
   },
 });
