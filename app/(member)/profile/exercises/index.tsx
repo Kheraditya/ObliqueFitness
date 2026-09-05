@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, Text, StyleSheet } from 'react-native';
+import { FlatList, Text, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen } from '../../../../src/components/Screen';
 import { TextField } from '../../../../src/components/TextField';
+import { ListItem } from '../../../../src/components/ListItem';
 import { listExercises } from '../../../../src/features/exercises/api';
 import { filterExercises } from '../../../../src/features/exercises/filters';
 import type { Exercise } from '../../../../src/features/exercises/types';
-import { typography, spacing, colors } from '../../../../src/theme';
+import { typography, spacing } from '../../../../src/theme';
 
 export default function ExerciseList() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -27,8 +28,11 @@ export default function ExerciseList() {
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <Pressable
-            style={styles.row}
+          <ListItem
+            title={item.name}
+            subtitle={item.primary_muscles[0] ?? ''}
+            imageUri={item.images[0]}
+            trailing="chevron"
             onPress={() => {
               if (pickMode === 'true' && returnTo) {
                 router.push({ pathname: returnTo, params: { addExerciseId: item.id } });
@@ -36,10 +40,7 @@ export default function ExerciseList() {
                 router.push(`/(member)/profile/exercises/${item.id}`);
               }
             }}
-          >
-            <Text style={typography.body}>{item.name}</Text>
-            <Text style={typography.label}>{item.primary_muscles.join(', ')}</Text>
-          </Pressable>
+          />
         )}
       />
     </Screen>
@@ -50,10 +51,5 @@ const styles = StyleSheet.create({
   heading: {
     marginTop: spacing.l,
     marginBottom: spacing.s,
-  },
-  row: {
-    paddingVertical: spacing.m,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
 });

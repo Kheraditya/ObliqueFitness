@@ -23,6 +23,20 @@ describe('ExerciseList', () => {
     expect(screen.getByText('Squat')).toBeTruthy();
   });
 
+  it('pushes to the exercise detail route when not in pick mode', async () => {
+    (listExercises as jest.Mock).mockResolvedValue([
+      { id: '1', name: 'Bench Press', primary_muscles: ['chest'], secondary_muscles: [], equipment: 'barbell', instructions: [], images: [], is_custom: false },
+    ]);
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
+
+    await render(<ExerciseList />);
+
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+    fireEvent.press(screen.getByText('Bench Press'));
+
+    expect(router.push).toHaveBeenCalledWith('/(member)/profile/exercises/1');
+  });
+
   it('pushes to returnTo with addExerciseId when in pick mode', async () => {
     (listExercises as jest.Mock).mockResolvedValue([
       { id: '1', name: 'Bench Press', primary_muscles: ['chest'], secondary_muscles: [], equipment: 'barbell', instructions: [], images: [], is_custom: false },
