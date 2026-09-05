@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase';
 import {
   listExercises,
   getExercise,
+  createExercise,
   getPersonalRecords,
   getExerciseHistory,
   getLeaderboard,
@@ -60,6 +61,82 @@ describe('getExercise', () => {
     const result = await getExercise('missing');
 
     expect(result).toBeNull();
+  });
+});
+
+describe('createExercise', () => {
+  it('returns an error when there is no session', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+
+    const result = await createExercise({
+      name: 'Battle Ropes',
+      equipment: 'None',
+      primaryMuscle: 'Cardio',
+      secondaryMuscles: [],
+      exerciseType: 'duration',
+    });
+
+    expect(result).toEqual({ id: null, error: 'Not authenticated' });
+  });
+
+  it('inserts a custom exercise owned by the current user', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    const single = jest.fn().mockResolvedValue({ data: { id: 'ex1' }, error: null });
+    const select = jest.fn(() => ({ single }));
+    const insert = jest.fn(() => ({ select }));
+    (supabase.from as jest.Mock).mockReturnValue({ insert });
+
+    const result = await createExercise({
+      name: 'Battle Ropes',
+      equipment: 'None',
+      primaryMuscle: 'Cardio',
+      secondaryMuscles: ['Shoulders', 'Forearms'],
+      exerciseType: 'duration',
+    });
+
+    expect(supabase.from).toHaveBeenCalledWith('exercises');
+    expect(insert).toHaveBeenCalledWith({
+      name: 'Battle Ropes',
+      equipment: 'None',
+      primary_muscles: ['Cardio'],
+      secondary_muscles: ['Shoulders', 'Forearms'],
+      exercise_type: 'duration',
+      is_custom: true,
+      created_by: 'u1',
+    });
+    expect(result).toEqual({ id: 'ex1', error: null });
+  });
+
+  it('omits the primary muscle from the array when none was selected', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    const single = jest.fn().mockResolvedValue({ data: { id: 'ex1' }, error: null });
+    const select = jest.fn(() => ({ single }));
+    const insert = jest.fn(() => ({ select }));
+    (supabase.from as jest.Mock).mockReturnValue({ insert });
+
+    await createExercise({ name: 'Custom', equipment: null, primaryMuscle: null, secondaryMuscles: [], exerciseType: null });
+
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ primary_muscles: [] })
+    );
+  });
+
+  it('returns the error message on failure', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    const single = jest.fn().mockResolvedValue({ data: null, error: { message: 'insert failed' } });
+    const select = jest.fn(() => ({ single }));
+    const insert = jest.fn(() => ({ select }));
+    (supabase.from as jest.Mock).mockReturnValue({ insert });
+
+    const result = await createExercise({
+      name: 'Battle Ropes',
+      equipment: null,
+      primaryMuscle: null,
+      secondaryMuscles: [],
+      exerciseType: null,
+    });
+
+    expect(result).toEqual({ id: null, error: 'insert failed' });
   });
 });
 

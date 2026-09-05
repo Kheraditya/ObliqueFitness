@@ -23,6 +23,7 @@ const exercise = {
   images: [],
   is_custom: false,
   created_by: null,
+  exercise_type: null,
 };
 
 describe('SummaryTab', () => {

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Image, Pressable, Text, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing, typography } from '../theme';
@@ -7,7 +8,9 @@ interface ListItemProps {
   subtitle?: string;
   icon?: keyof typeof Ionicons.glyphMap;
   imageUri?: string;
-  trailing?: 'chevron' | string;
+  // 'chevron' renders the standard forward chevron; a string renders as trailing text (e.g. a
+  // value/stat); any other node (e.g. a Pressable info icon) is rendered as-is.
+  trailing?: 'chevron' | string | ReactNode;
   onPress?: () => void;
 }
 
@@ -28,9 +31,11 @@ export function ListItem({ title, subtitle, icon, imageUri, trailing, onPress }:
       </View>
       {trailing === 'chevron' ? (
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-      ) : trailing ? (
+      ) : typeof trailing === 'string' ? (
         <Text style={typography.body}>{trailing}</Text>
-      ) : null}
+      ) : (
+        trailing ?? null
+      )}
     </Wrapper>
   );
 }

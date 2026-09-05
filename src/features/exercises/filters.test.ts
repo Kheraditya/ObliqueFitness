@@ -11,6 +11,7 @@ function makeExercise(overrides: Partial<Exercise>): Exercise {
     instructions: [],
     images: [],
     is_custom: false,
+    exercise_type: null,
     ...overrides,
   };
 }

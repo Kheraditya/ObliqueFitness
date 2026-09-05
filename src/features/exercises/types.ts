@@ -7,6 +7,7 @@ export interface Exercise {
   instructions: string[];
   images: string[];
   is_custom: boolean;
+  exercise_type: string | null;
 }
 
 export interface PersonalRecords {

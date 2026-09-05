@@ -9,6 +9,7 @@ const mockExercise = {
   instructions: ['Lie on the bench.', 'Press the bar up.'],
   images: [],
   is_custom: false,
+  exercise_type: null,
 };
 
 jest.mock('../../../../../src/features/exercises/api', () => ({

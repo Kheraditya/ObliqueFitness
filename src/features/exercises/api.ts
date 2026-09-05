@@ -27,6 +27,39 @@ export async function getExercise(id: string): Promise<Exercise | null> {
   return data as Exercise | null;
 }
 
+export interface CreateExerciseInput {
+  name: string;
+  equipment: string | null;
+  primaryMuscle: string | null;
+  secondaryMuscles: string[];
+  exerciseType: string | null;
+}
+
+export async function createExercise(input: CreateExerciseInput): Promise<{ id: string | null; error: string | null }> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) return { id: null, error: 'Not authenticated' };
+
+  const { data, error } = await supabase
+    .from('exercises')
+    .insert({
+      name: input.name,
+      equipment: input.equipment,
+      primary_muscles: input.primaryMuscle ? [input.primaryMuscle] : [],
+      secondary_muscles: input.secondaryMuscles,
+      exercise_type: input.exerciseType,
+      is_custom: true,
+      created_by: session.user.id,
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) return { id: null, error: error ? error.message : 'Failed to create exercise' };
+  return { id: (data as { id: string }).id, error: null };
+}
+
 const emptyRecords: PersonalRecords = {
   heaviestWeight: null,
   best1RM: null,
