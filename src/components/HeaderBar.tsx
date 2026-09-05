@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { spacing } from '../theme';
+import type { ReactNode } from "react";
+import { View, StyleSheet } from "react-native";
+import { spacing } from "../theme";
 
 interface HeaderBarProps {
   left?: ReactNode;
@@ -13,33 +13,34 @@ interface HeaderBarProps {
 export function HeaderBar({ left, center, right }: HeaderBarProps) {
   return (
     <View style={styles.row}>
-      <View style={[styles.side, styles.leftSide]}>{left}</View>
+      <View style={[styles.leftSide]}>{left}</View>
       <View style={styles.center}>{center}</View>
-      <View style={[styles.side, styles.rightSide]}>{right}</View>
+      <View style={[styles.rightSide]}>{right}</View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: spacing.l,
     paddingVertical: spacing.m,
   },
   side: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   leftSide: {
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
   },
   rightSide: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   center: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
+    marginLeft: -40,
   },
 });
