@@ -37,7 +37,7 @@ describe('ExerciseList', () => {
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
     fireEvent.press(screen.getByText('Bench Press'));
 
-    expect(router.push).toHaveBeenCalledWith('/(member)/profile/exercises/1');
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/(member)/profile/exercises/1', params: {} });
   });
 
   it('pushes to returnTo with addExerciseId when in pick mode', async () => {
@@ -138,7 +138,7 @@ describe('ExerciseList', () => {
     expect(router.setParams).toHaveBeenCalledWith({ selectedEquipment: undefined });
   });
 
-  it('always opens the detail screen from the info icon, even in pick mode', async () => {
+  it('always opens the detail screen from the info icon, even in pick mode, forwarding pick-mode context so the detail screen can navigate back explicitly', async () => {
     (listExercises as jest.Mock).mockResolvedValue([
       { id: '1', name: 'Bench Press', primary_muscles: ['chest'], secondary_muscles: [], equipment: 'barbell', instructions: [], images: [], is_custom: false },
     ]);
@@ -149,6 +149,9 @@ describe('ExerciseList', () => {
 
     await fireEvent.press(screen.getByTestId('exercise-info-1'));
 
-    expect(router.push).toHaveBeenCalledWith('/(member)/profile/exercises/1');
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/(member)/profile/exercises/1',
+      params: { pickMode: 'true', callerReturnTo: '/(member)/routines/new' },
+    });
   });
 });

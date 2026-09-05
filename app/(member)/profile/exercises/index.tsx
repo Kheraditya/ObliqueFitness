@@ -71,6 +71,14 @@ export default function ExerciseList() {
   if (params.pickMode) forwardedParams.pickMode = params.pickMode;
   if (returnTo) forwardedParams.callerReturnTo = returnTo;
 
+  // The detail screen uses router.dismissTo to pop back to THIS existing list instance rather
+  // than pushing a new one, so it doesn't need returnTo forwarded -- but it does need to know
+  // pickMode, to decide whether it's safe to leave the native swipe-back gesture enabled (see
+  // that screen's own comment for why cross-tab pick-mode entries disable it).
+  function goToDetail(exerciseId: string) {
+    router.push({ pathname: `/(member)/profile/exercises/${exerciseId}`, params: forwardedParams });
+  }
+
   return (
     <Screen
       header={
@@ -140,11 +148,7 @@ export default function ExerciseList() {
             subtitle={item.primary_muscles[0] ?? ''}
             imageUri={item.images[0]}
             trailing={
-              <Pressable
-                onPress={() => router.push(`/(member)/profile/exercises/${item.id}`)}
-                hitSlop={8}
-                testID={`exercise-info-${item.id}`}
-              >
+              <Pressable onPress={() => goToDetail(item.id)} hitSlop={8} testID={`exercise-info-${item.id}`}>
                 <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
               </Pressable>
             }
@@ -152,7 +156,7 @@ export default function ExerciseList() {
               if (pickMode && returnTo) {
                 router.push({ pathname: returnTo, params: { addExerciseId: item.id } });
               } else {
-                router.push(`/(member)/profile/exercises/${item.id}`);
+                goToDetail(item.id);
               }
             }}
           />

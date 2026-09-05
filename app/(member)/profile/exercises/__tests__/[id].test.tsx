@@ -22,14 +22,83 @@ jest.mock('../../../../../src/features/exercises/api', () => ({
   setLeaderboardOptIn: jest.fn(),
 }));
 
+const mockSetOptions = jest.fn();
+
 jest.mock('expo-router', () => ({
-  useLocalSearchParams: () => ({ id: 'ex-1' }),
+  router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn() },
+  useLocalSearchParams: jest.fn(() => ({ id: 'ex-1' })),
+  useNavigation: () => ({ setOptions: mockSetOptions }),
 }));
 
 import { getExercise, getLeaderboard, getLeaderboardOptIn } from '../../../../../src/features/exercises/api';
+import { router, useLocalSearchParams } from 'expo-router';
 import ExerciseDetail from '../[id]';
 
 describe('ExerciseDetail', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: 'ex-1' });
+  });
+
+  it('dismisses back to the existing exercise list instance with no extra params, outside pick mode', async () => {
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('back-button'));
+
+    expect(router.dismissTo).toHaveBeenCalledWith({ pathname: '/(member)/profile/exercises', params: {} });
+    expect(router.push).not.toHaveBeenCalled();
+    expect(router.back).not.toHaveBeenCalled();
+  });
+
+  it('dismisses back to the existing list instance, re-supplying pickMode/returnTo so dismissTo does not wipe them off it', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({
+      id: 'ex-1',
+      pickMode: 'true',
+      callerReturnTo: '/(member)/active-workout/s1',
+    });
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('back-button'));
+
+    expect(router.dismissTo).toHaveBeenCalledWith({
+      pathname: '/(member)/profile/exercises',
+      params: { pickMode: 'true', returnTo: '/(member)/active-workout/s1' },
+    });
+  });
+
+  it('disables the swipe-back gesture when opened in pick mode (the cross-tab entry that makes it unreliable)', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: 'ex-1', pickMode: 'true' });
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+
+    expect(mockSetOptions).toHaveBeenCalledWith({ gestureEnabled: false });
+  });
+
+  it('leaves the swipe-back gesture enabled for normal, same-tab browsing', async () => {
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+
+    expect(mockSetOptions).toHaveBeenCalledWith({ gestureEnabled: true });
+  });
+
+  it('shows a back button even while the exercise is still loading', async () => {
+    (getExercise as jest.Mock).mockResolvedValue(new Promise(() => {}));
+
+    await render(<ExerciseDetail />);
+
+    expect(screen.getByTestId('back-button')).toBeTruthy();
+  });
+
   it('renders the exercise name and defaults to the Summary tab', async () => {
     (getExercise as jest.Mock).mockResolvedValue(mockExercise);
 
