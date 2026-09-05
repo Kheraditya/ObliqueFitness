@@ -79,17 +79,30 @@ export default function ExerciseList() {
     router.push({ pathname: `/(member)/profile/exercises/${exerciseId}`, params: forwardedParams });
   }
 
+  // This list is frequently reached by pushing across a tab boundary (Active Workout,
+  // Create/Edit Routine all live outside the "profile" tab that owns this route), where a plain
+  // router.back() can't be trusted to unwind back to the caller -- it can pop further than one
+  // level (e.g. landing on Home instead of the active workout session). When we know exactly
+  // where we came from (pick mode always carries returnTo), navigate there explicitly instead.
+  function handleCancel() {
+    if (returnTo) {
+      router.dismissTo(returnTo);
+    } else {
+      router.back();
+    }
+  }
+
   return (
     <Screen
       header={
         <HeaderBar
           left={
             pickMode ? (
-              <Pressable onPress={() => router.back()} hitSlop={8}>
+              <Pressable onPress={handleCancel} hitSlop={8}>
                 <Text style={styles.cancelText}>Cancel</Text>
               </Pressable>
             ) : (
-              <Pressable onPress={() => router.back()} hitSlop={8}>
+              <Pressable onPress={() => router.back()} hitSlop={8} testID="back-button">
                 <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
               </Pressable>
             )

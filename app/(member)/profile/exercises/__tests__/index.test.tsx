@@ -5,7 +5,7 @@ jest.mock('../../../../../src/features/exercises/api', () => ({
 }));
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), back: jest.fn(), setParams: jest.fn() },
+  router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: jest.fn(() => ({})),
 }));
 
@@ -14,6 +14,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import ExerciseList from '../index';
 
 describe('ExerciseList', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('renders exercises once loaded', async () => {
     (listExercises as jest.Mock).mockResolvedValue([
       { id: '1', name: 'Bench Press', primary_muscles: ['chest'], secondary_muscles: [], equipment: 'barbell', instructions: [], images: [], is_custom: false },
@@ -153,5 +157,30 @@ describe('ExerciseList', () => {
       pathname: '/(member)/profile/exercises/1',
       params: { pickMode: 'true', callerReturnTo: '/(member)/routines/new' },
     });
+  });
+
+  it('dismisses explicitly to the caller when Cancel is pressed in pick mode, instead of a plain back() that can pop too far across the tab boundary', async () => {
+    (listExercises as jest.Mock).mockResolvedValue([]);
+    (useLocalSearchParams as jest.Mock).mockReturnValue({
+      pickMode: 'true',
+      returnTo: '/(member)/active-workout/s1',
+    });
+
+    await render(<ExerciseList />);
+    await fireEvent.press(screen.getByText('Cancel'));
+
+    expect(router.dismissTo).toHaveBeenCalledWith('/(member)/active-workout/s1');
+    expect(router.back).not.toHaveBeenCalled();
+  });
+
+  it('falls back to router.back() when browsing outside pick mode, where the back arrow is pressed', async () => {
+    (listExercises as jest.Mock).mockResolvedValue([]);
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
+
+    await render(<ExerciseList />);
+    await fireEvent.press(screen.getByTestId('back-button'));
+
+    expect(router.back).toHaveBeenCalled();
+    expect(router.dismissTo).not.toHaveBeenCalled();
   });
 });
