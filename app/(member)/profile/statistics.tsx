@@ -37,7 +37,7 @@ export default function Statistics() {
 const styles = StyleSheet.create({
   heading: {
     marginTop: spacing.l,
-    marginBottom: spacing.s,
+    marginBottom: spacing.l,
   },
   sectionHeading: {
     fontSize: 20,

@@ -4,6 +4,7 @@ import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme } from 'victory-na
 import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
 import { ErrorText } from '../../../src/components/ErrorText';
+import { ListItem } from '../../../src/components/ListItem';
 import { listMeasurements, logMeasurement, deleteMeasurement } from '../../../src/features/measurements/api';
 import type { Measurement } from '../../../src/features/measurements/types';
 import { colors, radius, spacing, typography } from '../../../src/theme';
@@ -115,10 +116,8 @@ export default function Measures() {
           .reverse()
           .map((entry) => (
             <View key={entry.id} style={styles.entryRow}>
-              <Text style={typography.body}>
-                {entry.value} {entry.unit}
-              </Text>
-              <Pressable onPress={() => handleDelete(entry.id)}>
+              <ListItem title={entry.loggedAt.slice(0, 10)} trailing={`${entry.value} ${entry.unit}`} />
+              <Pressable onPress={() => handleDelete(entry.id)} style={styles.deleteButton}>
                 <Text style={styles.deleteText}>Delete</Text>
               </Pressable>
             </View>
@@ -171,12 +170,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
   },
   entryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.s,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    marginBottom: spacing.xs,
+  },
+  deleteButton: {
+    alignSelf: 'flex-end',
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.s,
   },
   deleteText: {
     color: colors.danger,

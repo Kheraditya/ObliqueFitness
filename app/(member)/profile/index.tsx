@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { signOut } from '../../../src/features/auth/api';
 import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
+import { DashboardTile } from '../../../src/components/DashboardTile';
 import { typography, spacing } from '../../../src/theme';
 
 export default function ProfileHome() {
@@ -10,10 +11,26 @@ export default function ProfileHome() {
     <Screen>
       <Text style={[typography.title, styles.heading]}>Profile</Text>
       <View style={styles.grid}>
-        <Button title="Exercises" variant="secondary" onPress={() => router.push('/(member)/profile/exercises')} />
-        <Button title="Statistics" variant="secondary" onPress={() => router.push('/(member)/profile/statistics')} />
-        <Button title="Measures" variant="secondary" onPress={() => router.push('/(member)/profile/measures')} />
-        <Button title="Calendar" variant="secondary" disabled onPress={() => {}} />
+        <View style={styles.tileRow}>
+          <DashboardTile
+            label="Statistics"
+            icon="stats-chart-outline"
+            onPress={() => router.push('/(member)/profile/statistics')}
+          />
+          <DashboardTile
+            label="Exercises"
+            icon="barbell-outline"
+            onPress={() => router.push('/(member)/profile/exercises')}
+          />
+        </View>
+        <View style={styles.tileRow}>
+          <DashboardTile
+            label="Measures"
+            icon="body-outline"
+            onPress={() => router.push('/(member)/profile/measures')}
+          />
+          <DashboardTile label="Calendar" icon="calendar-outline" onPress={() => {}} disabled />
+        </View>
       </View>
       <Button
         title="Sign Out"
@@ -33,6 +50,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.l,
   },
   grid: {
+    gap: spacing.s,
+    marginBottom: spacing.l,
+  },
+  tileRow: {
+    flexDirection: 'row',
     gap: spacing.s,
   },
 });
