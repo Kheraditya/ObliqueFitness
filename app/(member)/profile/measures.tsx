@@ -5,6 +5,7 @@ import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
 import { ErrorText } from '../../../src/components/ErrorText';
 import { ListItem } from '../../../src/components/ListItem';
+import { PillTabs } from '../../../src/components/PillTabs';
 import { listMeasurements, logMeasurement, deleteMeasurement } from '../../../src/features/measurements/api';
 import type { Measurement } from '../../../src/features/measurements/types';
 import { colors, radius, spacing, typography } from '../../../src/theme';
@@ -62,16 +63,15 @@ export default function Measures() {
     <Screen>
       <ScrollView>
         <Text style={[typography.title, styles.heading]}>Measures</Text>
-        <View style={styles.typeRow}>
-          {BUILTIN_TYPES.map((t) => (
-            <Pressable key={t.key} onPress={() => setSelectedType(t.key)} style={styles.typeChip}>
-              <Text style={selectedType === t.key ? styles.typeChipActive : styles.typeChipInactive}>{t.label}</Text>
-            </Pressable>
-          ))}
-          <Pressable onPress={() => setSelectedType('custom')} style={styles.typeChip}>
-            <Text style={selectedType === 'custom' ? styles.typeChipActive : styles.typeChipInactive}>Custom</Text>
-          </Pressable>
-        </View>
+        <PillTabs
+          options={[
+            { key: 'weight', label: 'Weight' },
+            { key: 'body_fat', label: 'Body Fat' },
+            { key: 'custom', label: 'Custom' },
+          ]}
+          value={selectedType}
+          onChange={setSelectedType}
+        />
         {selectedType === 'custom' && (
           <>
             <TextInput
@@ -132,26 +132,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.l,
     marginBottom: spacing.m,
   },
-  typeRow: {
-    flexDirection: 'row',
-    gap: spacing.s,
-    marginBottom: spacing.s,
-  },
-  typeChip: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.m,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  typeChipActive: {
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  typeChipInactive: {
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -170,7 +150,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
   },
   entryRow: {
-    marginBottom: spacing.xs,
+    marginBottom: spacing.m,
   },
   deleteButton: {
     alignSelf: 'flex-end',

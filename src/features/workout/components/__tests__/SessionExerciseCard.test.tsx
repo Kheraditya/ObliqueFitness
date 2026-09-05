@@ -15,8 +15,9 @@ describe('SessionExerciseCard', () => {
     const onLogSet = jest.fn();
     await render(<SessionExerciseCard exercise={exercise} sets={[]} onLogSet={onLogSet} onUpdateSet={jest.fn()} />);
 
-    await fireEvent.changeText(screen.getByPlaceholderText('-'), '100');
-    await fireEvent.changeText(screen.getByPlaceholderText('reps'), '5');
+    const inputs = screen.getAllByPlaceholderText('-');
+    await fireEvent.changeText(inputs[0], '100');
+    await fireEvent.changeText(inputs[1], '5');
     await fireEvent.press(screen.getByText('Add Set'));
 
     expect(onLogSet).toHaveBeenCalledWith(100, 5, null);
@@ -33,7 +34,7 @@ describe('SessionExerciseCard', () => {
     expect(screen.getByText('80')).toBeTruthy();
     expect(screen.getByText('8')).toBeTruthy();
     await fireEvent.press(screen.getByText('80'));
-    await fireEvent.changeText(screen.getByPlaceholderText('-'), '85');
+    await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '85');
     await fireEvent.press(screen.getByText('Update Set'));
 
     expect(onUpdateSet).toHaveBeenCalledWith('set1', 85, 8, null);

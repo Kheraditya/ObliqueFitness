@@ -13,7 +13,14 @@ function TabIcon({ name, focused }: { name: keyof typeof Ionicons.glyphMap; focu
 
 export default function MemberTabsLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textSecondary,
+      }}
+    >
       <Tabs.Screen
         name="home"
         options={{

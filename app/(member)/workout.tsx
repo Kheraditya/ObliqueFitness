@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, Text, View, StyleSheet } from 'react-native';
+import { FlatList, Text, View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { Button } from '../../src/components/Button';
 import { ErrorText } from '../../src/components/ErrorText';
 import { DashboardTile } from '../../src/components/DashboardTile';
+import { ListItem } from '../../src/components/ListItem';
 import { listRoutines } from '../../src/features/routines/api';
 import { startSession } from '../../src/features/workout/api';
-import { typography, spacing, colors } from '../../src/theme';
+import { typography, spacing } from '../../src/theme';
 
 export default function Workout() {
   const [routines, setRoutines] = useState<{ id: string; name: string }[]>([]);
@@ -40,9 +41,7 @@ export default function Workout() {
         data={routines}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <Pressable style={styles.row} onPress={() => router.push(`/(member)/routines/${item.id}`)}>
-            <Text style={typography.body}>{item.name}</Text>
-          </Pressable>
+          <ListItem title={item.name} trailing="chevron" onPress={() => router.push(`/(member)/routines/${item.id}`)} />
         )}
       />
     </Screen>
@@ -63,10 +62,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.s,
     marginBottom: spacing.s,
-  },
-  row: {
-    paddingVertical: spacing.m,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
 });

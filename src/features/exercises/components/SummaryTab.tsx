@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Image, Text, View, StyleSheet } from 'react-native';
 import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme } from 'victory-native';
 import { ListItem } from '../../../components/ListItem';
-import { PillTabs } from '../../../components/PillTabs';
 import { getPersonalRecords, getStrengthTrend } from '../api';
 import type { Exercise, PersonalRecords } from '../types';
 import { colors, radius, spacing, typography } from '../../../theme';
@@ -14,9 +13,6 @@ function formatRecord(value: number | null | undefined) {
 export function SummaryTab({ exercise }: { exercise: Exercise }) {
   const [records, setRecords] = useState<PersonalRecords | null>(null);
   const [trend, setTrend] = useState<{ date: string; maxWeight: number; best1RM: number }[]>([]);
-  // Presentational only for now — the PR list below always shows all four records
-  // regardless of which pill is selected.
-  const [recordMetric, setRecordMetric] = useState('heaviest');
 
   useEffect(() => {
     getPersonalRecords(exercise.id).then(setRecords);
@@ -32,15 +28,6 @@ export function SummaryTab({ exercise }: { exercise: Exercise }) {
       {exercise.secondary_muscles.length > 0 && (
         <Text style={typography.label}>Secondary: {exercise.secondary_muscles.join(', ')}</Text>
       )}
-      <PillTabs
-        options={[
-          { key: 'heaviest', label: 'Heaviest Weight' },
-          { key: '1rm', label: 'One Rep Max' },
-          { key: 'setvol', label: 'Best Set Volume' },
-        ]}
-        value={recordMetric}
-        onChange={setRecordMetric}
-      />
       <View style={styles.card}>
         <ListItem title="Heaviest Weight" trailing={formatRecord(records?.heaviestWeight)} />
         <ListItem title="Best 1RM" trailing={formatRecord(records?.best1RM)} />

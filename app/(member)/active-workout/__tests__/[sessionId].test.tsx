@@ -39,8 +39,8 @@ describe('ActiveWorkout', () => {
 
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
 
-    await fireEvent.changeText(screen.getByPlaceholderText('-'), '100');
-    await fireEvent.changeText(screen.getByPlaceholderText('reps'), '5');
+    await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
+    await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
     await fireEvent.press(screen.getByText('Add Set'));
 
     expect(logSet).toHaveBeenCalledWith('s1', 'ex1', 1, 100, 5, null);
@@ -97,8 +97,8 @@ describe('ActiveWorkout', () => {
 
     jest.useFakeTimers();
     try {
-      await fireEvent.changeText(screen.getByPlaceholderText('-'), '100');
-      await fireEvent.changeText(screen.getByPlaceholderText('reps'), '5');
+      await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
+      await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
       await act(async () => {
         await fireEvent.press(screen.getByText('Add Set'));
       });
@@ -112,8 +112,8 @@ describe('ActiveWorkout', () => {
       }
       expect(screen.getByText('Resting: 85s')).toBeTruthy();
 
-      await fireEvent.changeText(screen.getByPlaceholderText('-'), '100');
-      await fireEvent.changeText(screen.getByPlaceholderText('reps'), '5');
+      await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
+      await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
       await act(async () => {
         await fireEvent.press(screen.getByText('Add Set'));
       });

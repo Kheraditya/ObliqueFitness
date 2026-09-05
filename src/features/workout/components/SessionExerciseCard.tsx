@@ -52,7 +52,7 @@ export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: S
       <Text style={typography.body}>{exercise.exerciseName}</Text>
       {exercise.supersetGroup != null && <Text style={typography.label}>Superset {exercise.supersetGroup}</Text>}
       <View style={styles.columnHeaderRow}>
-        <Text style={styles.columnHeader}>SET</Text>
+        <Text style={[styles.columnHeader, styles.setColumnHeader]}>SET</Text>
         <Text style={styles.columnHeader}>KG</Text>
         <Text style={styles.columnHeader}>REPS</Text>
         <Text style={styles.columnHeader}>RPE</Text>
@@ -81,7 +81,7 @@ export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: S
         />
         <TextInput
           style={styles.input}
-          placeholder="reps"
+          placeholder="-"
           placeholderTextColor={colors.textSecondary}
           value={reps}
           onChangeText={setReps}
@@ -89,7 +89,7 @@ export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: S
         />
         <TextInput
           style={styles.input}
-          placeholder="RPE"
+          placeholder="-"
           placeholderTextColor={colors.textSecondary}
           value={rpe}
           onChangeText={setRpe}
@@ -119,6 +119,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  // Matches the 28px set-number badge in the set/input rows below, so SET sits over
+  // the badge column and KG/REPS/RPE sit over the three flex:1 value columns.
+  setColumnHeader: {
+    flex: 0,
+    width: 28,
   },
   setRow: {
     flexDirection: 'row',
@@ -132,6 +139,8 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.textPrimary,
     fontSize: 15,
+    // Centered to match the input boxes below, which use textAlign: 'center'.
+    textAlign: 'center',
   },
   setBadge: {
     width: 28,
