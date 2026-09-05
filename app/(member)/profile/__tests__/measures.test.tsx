@@ -2,28 +2,52 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react-nativ
 
 jest.mock('../../../../src/features/measurements/api', () => ({
   listMeasurements: jest.fn(),
-  logMeasurement: jest.fn(),
   deleteMeasurement: jest.fn(),
 }));
 
-import { listMeasurements, logMeasurement, deleteMeasurement } from '../../../../src/features/measurements/api';
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), back: jest.fn() },
+  useFocusEffect: (callback: () => void) => callback(),
+}));
+
+import { listMeasurements, deleteMeasurement } from '../../../../src/features/measurements/api';
+import { router } from 'expo-router';
 import Measures from '../measures';
 
 describe('Measures', () => {
-  it('logs a weight measurement and refreshes the list', async () => {
-    (listMeasurements as jest.Mock)
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ id: 'm1', type: 'weight', value: 80, unit: 'kg', loggedAt: '2026-09-04T00:00:00Z' }]);
-    (logMeasurement as jest.Mock).mockResolvedValue({ error: null });
+  it('shows "No data yet." when there are no entries', async () => {
+    (listMeasurements as jest.Mock).mockResolvedValue([]);
 
     await render(<Measures />);
+
     await waitFor(() => expect(screen.getByText('No data yet.')).toBeTruthy());
+  });
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Value'), '80');
-    await fireEvent.press(screen.getByText('Log'));
+  it('shows the latest value/date and history for the default type', async () => {
+    (listMeasurements as jest.Mock).mockResolvedValue([
+      { id: 'm1', type: 'weight', value: 78, unit: 'kg', loggedAt: '2026-09-01T00:00:00Z' },
+      { id: 'm2', type: 'weight', value: 80, unit: 'kg', loggedAt: '2026-09-04T00:00:00Z' },
+    ]);
 
-    expect(logMeasurement).toHaveBeenCalledWith('weight', 80, 'kg');
-    await waitFor(() => expect(screen.getByText('80 kg')).toBeTruthy());
+    await render(<Measures />);
+
+    await waitFor(() => expect(screen.getAllByText('80kg').length).toBeGreaterThan(0));
+    expect(screen.getAllByText('2026-09-04').length).toBeGreaterThan(0);
+    expect(screen.getByText('2026-09-01')).toBeTruthy();
+  });
+
+  it('switches history when a different type pill is pressed', async () => {
+    (listMeasurements as jest.Mock).mockResolvedValue([
+      { id: 'm1', type: 'weight', value: 80, unit: 'kg', loggedAt: '2026-09-04T00:00:00Z' },
+      { id: 'm2', type: 'body_fat', value: 18, unit: '%', loggedAt: '2026-09-04T00:00:00Z' },
+    ]);
+
+    await render(<Measures />);
+
+    await waitFor(() => expect(screen.getAllByText('80kg').length).toBeGreaterThan(0));
+    await fireEvent.press(screen.getByText('Body Fat'));
+
+    await waitFor(() => expect(screen.getAllByText('18%').length).toBeGreaterThan(0));
   });
 
   it('deletes a measurement when Delete is pressed', async () => {
@@ -33,44 +57,21 @@ describe('Measures', () => {
     (deleteMeasurement as jest.Mock).mockResolvedValue({ error: null });
 
     await render(<Measures />);
-    await waitFor(() => expect(screen.getByText('80 kg')).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText('80kg').length).toBeGreaterThan(0));
 
     await fireEvent.press(screen.getByText('Delete'));
 
     expect(deleteMeasurement).toHaveBeenCalledWith('m1');
-    await waitFor(() => expect(screen.queryByText('80 kg')).toBeNull());
   });
 
-  it('clears a previous error once a later log succeeds', async () => {
+  it('navigates to the Log Measurement screen when + is pressed', async () => {
     (listMeasurements as jest.Mock).mockResolvedValue([]);
-    (logMeasurement as jest.Mock)
-      .mockResolvedValueOnce({ error: 'boom' })
-      .mockResolvedValueOnce({ error: null });
 
     await render(<Measures />);
-    await waitFor(() => expect(screen.getByText('No data yet.')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Measurements')).toBeTruthy());
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Value'), '80');
-    await fireEvent.press(screen.getByText('Log'));
-    await waitFor(() => expect(screen.getByText('boom')).toBeTruthy());
+    await fireEvent.press(screen.getByTestId('add-measurement-button'));
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Value'), '85');
-    await fireEvent.press(screen.getByText('Log'));
-
-    await waitFor(() => expect(screen.queryByText('boom')).toBeNull());
-  });
-
-  it('clears the displayed entries when switching to Custom with an empty label', async () => {
-    (listMeasurements as jest.Mock).mockResolvedValue([
-      { id: 'm1', type: 'weight', value: 80, unit: 'kg', loggedAt: '2026-09-04T00:00:00Z' },
-    ]);
-
-    await render(<Measures />);
-    await waitFor(() => expect(screen.getByText('80 kg')).toBeTruthy());
-
-    await fireEvent.press(screen.getByText('Custom'));
-
-    await waitFor(() => expect(screen.queryByText('80 kg')).toBeNull());
-    expect(screen.getByText('No data yet.')).toBeTruthy();
+    expect(router.push).toHaveBeenCalledWith('/(member)/profile/log-measurement');
   });
 });

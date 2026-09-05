@@ -6,7 +6,7 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { startSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession, getWorkoutSummary } from './api';
+import { startSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession, getWorkoutSummary, getWorkoutDates } from './api';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -226,5 +226,38 @@ describe('getWorkoutSummary', () => {
     const result = await getWorkoutSummary();
 
     expect(result).toEqual({ count: 0, recent: [] });
+  });
+});
+
+describe('getWorkoutDates', () => {
+  it('returns distinct local calendar-day strings for completed sessions', async () => {
+    const gte = jest.fn().mockResolvedValue({
+      data: [
+        { started_at: '2026-09-04T10:00:00.000Z' },
+        { started_at: '2026-09-04T18:00:00.000Z' },
+        { started_at: '2026-09-02T10:00:00.000Z' },
+      ],
+      error: null,
+    });
+    const not = jest.fn(() => ({ gte }));
+    const select = jest.fn(() => ({ not }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getWorkoutDates();
+
+    expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
+    expect(not).toHaveBeenCalledWith('ended_at', 'is', null);
+    expect(result.sort()).toEqual(['2026-09-02', '2026-09-04']);
+  });
+
+  it('returns an empty array when there is no data', async () => {
+    const gte = jest.fn().mockResolvedValue({ data: null, error: null });
+    const not = jest.fn(() => ({ gte }));
+    const select = jest.fn(() => ({ not }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getWorkoutDates();
+
+    expect(result).toEqual([]);
   });
 });

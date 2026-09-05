@@ -185,6 +185,27 @@ export async function getWorkoutSummary(): Promise<WorkoutSummary> {
   };
 }
 
+function toLocalDateString(isoString: string): string {
+  const d = new Date(isoString);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Bounded to the last 180 days -- enough to back a few months of calendar view and streak
+// computation without an unbounded query as a user's history grows.
+export async function getWorkoutDates(): Promise<string[]> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 180);
+
+  const { data } = await supabase
+    .from('workout_sessions')
+    .select('started_at')
+    .not('ended_at', 'is', null)
+    .gte('started_at', cutoff.toISOString());
+
+  const rows = (data ?? []) as unknown as { started_at: string }[];
+  return Array.from(new Set(rows.map((row) => toLocalDateString(row.started_at))));
+}
+
 export async function finishSession(sessionId: string, startedAt: string): Promise<{ error: string | null }> {
   // Use Date.now() explicitly (rather than `new Date()`) so this respects a mocked clock in
   // tests -- `new Date()` reads the system clock independently of `Date.now()` and does not

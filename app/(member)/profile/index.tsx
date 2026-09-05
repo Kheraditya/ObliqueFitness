@@ -44,7 +44,7 @@ export default function ProfileHome() {
         <View style={styles.header}>
           <Text style={typography.title}>{name ?? 'Member'}</Text>
           <View style={styles.headerIcons}>
-            <Pressable onPress={() => {}} style={styles.headerIconButton}>
+            <Pressable onPress={() => router.push('/(member)/profile/edit')} style={styles.headerIconButton}>
               <Ionicons name="pencil" size={20} color={colors.textPrimary} />
             </Pressable>
             <Pressable onPress={() => {}} style={styles.headerIconButton}>
@@ -104,7 +104,11 @@ export default function ProfileHome() {
               icon="body-outline"
               onPress={() => router.push('/(member)/profile/measures')}
             />
-            <DashboardTile label="Calendar" icon="calendar-outline" onPress={() => {}} disabled />
+            <DashboardTile
+              label="Calendar"
+              icon="calendar-outline"
+              onPress={() => router.push('/(member)/profile/calendar')}
+            />
           </View>
         </View>
 

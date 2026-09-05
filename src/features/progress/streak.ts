@@ -33,3 +33,43 @@ export function computeStreak(sessionDates: string[], today: Date = new Date()):
 
   return streak;
 }
+
+function mondayOf(date: Date): Date {
+  const day = date.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() + diff);
+  return new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
+}
+
+function weeksBetween(a: Date, b: Date): number {
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.round((a.getTime() - b.getTime()) / msPerWeek);
+}
+
+export function computeWeekStreak(sessionDates: string[], today: Date = new Date()): number {
+  const weekStarts = Array.from(new Set(sessionDates.map((d) => mondayOf(parseDate(d)).getTime())))
+    .sort((a, b) => b - a)
+    .map((t) => new Date(t));
+  if (weekStarts.length === 0) return 0;
+
+  const todayWeekStart = mondayOf(today);
+  const mostRecent = weekStarts[0];
+  const gapFromToday = weeksBetween(todayWeekStart, mostRecent);
+
+  if (gapFromToday > 1) return 0;
+
+  let streak = 1;
+  let cursor = mostRecent;
+
+  for (let i = 1; i < weekStarts.length; i++) {
+    if (weeksBetween(cursor, weekStarts[i]) === 1) {
+      streak += 1;
+      cursor = weekStarts[i];
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}

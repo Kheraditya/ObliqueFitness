@@ -12,7 +12,7 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { signUp, signIn, signOut, getCurrentUserProfile, redeemInviteCode } from './api';
+import { signUp, signIn, signOut, getCurrentUserProfile, updateProfile, redeemInviteCode } from './api';
 
 describe('signUp', () => {
   it('returns no error on success', async () => {
@@ -79,6 +79,43 @@ describe('getCurrentUserProfile', () => {
     expect(profile).toEqual({
       id: 'user-1', email: 'a@b.com', role: 'member', gym_id: null, name: null, avatar_url: null,
     });
+  });
+});
+
+describe('updateProfile', () => {
+  it('returns an error when there is no session', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
+    const result = await updateProfile({ name: 'A', bio: null, link: null, sex: null, birthday: null });
+    expect(result).toEqual({ error: 'Not authenticated' });
+  });
+
+  it('updates the users row for the current session user', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+      data: { session: { user: { id: 'user-1' } } },
+    });
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    const update = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ update });
+
+    const edits = { name: 'Aditya', bio: 'Lifting', link: 'https://x.com', sex: 'male', birthday: '2003-06-16' };
+    const result = await updateProfile(edits);
+
+    expect(supabase.from).toHaveBeenCalledWith('users');
+    expect(update).toHaveBeenCalledWith(edits);
+    expect(eq).toHaveBeenCalledWith('id', 'user-1');
+    expect(result).toEqual({ error: null });
+  });
+
+  it('returns the error message on failure', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+      data: { session: { user: { id: 'user-1' } } },
+    });
+    const eq = jest.fn().mockResolvedValue({ error: { message: 'boom' } });
+    const update = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ update });
+
+    const result = await updateProfile({ name: null, bio: null, link: null, sex: null, birthday: null });
+    expect(result).toEqual({ error: 'boom' });
   });
 });
 

@@ -28,6 +28,22 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
   return data as Profile | null;
 }
 
+export interface ProfileEdits {
+  name: string | null;
+  bio: string | null;
+  link: string | null;
+  sex: string | null;
+  birthday: string | null;
+}
+
+export async function updateProfile(edits: ProfileEdits): Promise<{ error: string | null }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: 'Not authenticated' };
+
+  const { error } = await supabase.from('users').update(edits).eq('id', session.user.id);
+  return { error: error ? error.message : null };
+}
+
 export async function redeemInviteCode(code: string): Promise<{ error: string | null }> {
   const { error } = await supabase.rpc('redeem_invite_code', { p_code: code });
   return { error: error ? error.message : null };
