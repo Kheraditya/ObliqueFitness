@@ -1,15 +1,22 @@
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View, StyleSheet } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Screen } from '../../../../src/components/Screen';
-import { HeaderBar } from '../../../../src/components/HeaderBar';
-import { ErrorText } from '../../../../src/components/ErrorText';
-import { createExercise } from '../../../../src/features/exercises/api';
-import { EXERCISE_TYPE_OPTIONS } from '../../../../src/features/exercises/constants';
-import { colors, radius, spacing, typography } from '../../../../src/theme';
+import { useEffect, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  StyleSheet,
+} from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Screen } from "../../../../src/components/Screen";
+import { HeaderBar } from "../../../../src/components/HeaderBar";
+import { ErrorText } from "../../../../src/components/ErrorText";
+import { createExercise } from "../../../../src/features/exercises/api";
+import { EXERCISE_TYPE_OPTIONS } from "../../../../src/features/exercises/constants";
+import { colors, radius, spacing, typography } from "../../../../src/theme";
 
-const OWN_PATH = '/(member)/profile/exercises/create';
+const OWN_PATH = "/(member)/profile/exercises/create";
 
 export default function CreateExercise() {
   const params = useLocalSearchParams<{
@@ -19,7 +26,7 @@ export default function CreateExercise() {
     selectedExerciseType?: string;
   }>();
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [equipment, setEquipment] = useState<string | null>(null);
   const [primaryMuscle, setPrimaryMuscle] = useState<string | null>(null);
   const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([]);
@@ -40,7 +47,11 @@ export default function CreateExercise() {
 
   useEffect(() => {
     if (params.selectedSecondaryMuscles === undefined) return;
-    setSecondaryMuscles(params.selectedSecondaryMuscles ? params.selectedSecondaryMuscles.split(',').filter(Boolean) : []);
+    setSecondaryMuscles(
+      params.selectedSecondaryMuscles
+        ? params.selectedSecondaryMuscles.split(",").filter(Boolean)
+        : [],
+    );
     router.setParams({ selectedSecondaryMuscles: undefined });
   }, [params.selectedSecondaryMuscles]);
 
@@ -51,7 +62,8 @@ export default function CreateExercise() {
   }, [params.selectedExerciseType]);
 
   const canSave = name.trim().length > 0;
-  const exerciseTypeLabel = EXERCISE_TYPE_OPTIONS.find((t) => t.key === exerciseType)?.label ?? null;
+  const exerciseTypeLabel =
+    EXERCISE_TYPE_OPTIONS.find((t) => t.key === exerciseType)?.label ?? null;
 
   async function handleSave() {
     if (!canSave) return;
@@ -74,8 +86,16 @@ export default function CreateExercise() {
       header={
         <HeaderBar
           left={
-            <Pressable onPress={() => router.back()} hitSlop={8} testID="back-button">
-              <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={8}
+              testID="back-button"
+            >
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={colors.textPrimary}
+              />
             </Pressable>
           }
           center={<Text style={typography.headerTitle}>Create Exercise</Text>}
@@ -86,7 +106,9 @@ export default function CreateExercise() {
               hitSlop={8}
               style={[styles.savePill, canSave && styles.savePillActive]}
             >
-              <Text style={[styles.saveText, canSave && styles.saveTextActive]}>Save</Text>
+              <Text style={[styles.saveText, canSave && styles.saveTextActive]}>
+                Save
+              </Text>
             </Pressable>
           }
         />
@@ -95,7 +117,11 @@ export default function CreateExercise() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.assetWrap}>
           <View style={styles.assetCircle}>
-            <Ionicons name="camera-outline" size={28} color={colors.textSecondary} />
+            <Ionicons
+              name="camera-outline"
+              size={28}
+              color={colors.textSecondary}
+            />
           </View>
           <Text style={styles.assetLabel}>Add Asset</Text>
         </View>
@@ -113,30 +139,47 @@ export default function CreateExercise() {
         <FieldRow
           title="Equipment"
           value={equipment}
-          onPress={() => router.push({ pathname: '/(member)/profile/exercises/select-equipment', params: { returnTo: OWN_PATH } })}
+          onPress={() =>
+            router.push({
+              pathname: "/(member)/profile/exercises/select-equipment",
+              params: { returnTo: OWN_PATH },
+            })
+          }
         />
         <FieldRow
           title="Primary Muscle Group"
           value={primaryMuscle}
-          onPress={() => router.push({ pathname: '/(member)/profile/exercises/select-muscle', params: { returnTo: OWN_PATH } })}
+          onPress={() =>
+            router.push({
+              pathname: "/(member)/profile/exercises/select-muscle",
+              params: { returnTo: OWN_PATH },
+            })
+          }
         />
         <FieldRow
           title="Other Muscles"
-          value={secondaryMuscles.length > 0 ? secondaryMuscles.join(', ') : null}
+          value={
+            secondaryMuscles.length > 0 ? secondaryMuscles.join(", ") : null
+          }
           placeholder="Select (optional)"
           onPress={() =>
             router.push({
-              pathname: '/(member)/profile/exercises/select-secondary-muscles',
-              params: { returnTo: OWN_PATH, initial: secondaryMuscles.join(',') },
+              pathname: "/(member)/profile/exercises/select-secondary-muscles",
+              params: {
+                returnTo: OWN_PATH,
+                initial: secondaryMuscles.join(","),
+              },
             })
           }
-          last
         />
         <FieldRow
           title="Exercise Type"
           value={exerciseTypeLabel}
           onPress={() =>
-            router.push({ pathname: '/(member)/profile/exercises/select-exercise-type', params: { returnTo: OWN_PATH } })
+            router.push({
+              pathname: "/(member)/profile/exercises/select-exercise-type",
+              params: { returnTo: OWN_PATH },
+            })
           }
           last
         />
@@ -148,7 +191,7 @@ export default function CreateExercise() {
 function FieldRow({
   title,
   value,
-  placeholder = 'Select',
+  placeholder = "Select",
   onPress,
   last = false,
 }: {
@@ -159,13 +202,20 @@ function FieldRow({
   last?: boolean;
 }) {
   return (
-    <Pressable style={[styles.rowBleed, last && styles.rowNoBorder]} onPress={onPress}>
+    <Pressable
+      style={[styles.rowBleed, last && styles.rowNoBorder]}
+      onPress={onPress}
+    >
       <View style={styles.row}>
         <View style={styles.rowText}>
           <Text style={styles.rowTitle}>{title}</Text>
           <Text style={styles.rowValue}>{value ?? placeholder}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={colors.textSecondary}
+        />
       </View>
     </Pressable>
   );
@@ -184,13 +234,13 @@ const styles = StyleSheet.create({
   saveText: {
     color: colors.textSecondary,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   saveTextActive: {
     color: colors.textPrimary,
   },
   assetWrap: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: spacing.l,
     marginBottom: spacing.l,
     gap: spacing.s,
@@ -201,13 +251,13 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   assetLabel: {
     color: colors.accent,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   nameInput: {
     fontSize: 20,
@@ -227,9 +277,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: spacing.m,
   },
   rowText: {

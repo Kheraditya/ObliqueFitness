@@ -1,28 +1,32 @@
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
-import { router, useLocalSearchParams, useNavigation } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Screen } from '../../../../src/components/Screen';
-import { HeaderBar } from '../../../../src/components/HeaderBar';
-import { getExercise } from '../../../../src/features/exercises/api';
-import type { Exercise } from '../../../../src/features/exercises/types';
-import { SummaryTab } from '../../../../src/features/exercises/components/SummaryTab';
-import { HistoryTab } from '../../../../src/features/exercises/components/HistoryTab';
-import { HowToTab } from '../../../../src/features/exercises/components/HowToTab';
-import { LeaderboardTab } from '../../../../src/features/exercises/components/LeaderboardTab';
-import { colors, spacing, typography } from '../../../../src/theme';
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Screen } from "../../../../src/components/Screen";
+import { HeaderBar } from "../../../../src/components/HeaderBar";
+import { getExercise } from "../../../../src/features/exercises/api";
+import type { Exercise } from "../../../../src/features/exercises/types";
+import { SummaryTab } from "../../../../src/features/exercises/components/SummaryTab";
+import { HistoryTab } from "../../../../src/features/exercises/components/HistoryTab";
+import { HowToTab } from "../../../../src/features/exercises/components/HowToTab";
+import { LeaderboardTab } from "../../../../src/features/exercises/components/LeaderboardTab";
+import { colors, spacing, typography } from "../../../../src/theme";
 
-type TabKey = 'summary' | 'history' | 'howto' | 'leaderboard';
+type TabKey = "summary" | "history" | "howto" | "leaderboard";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'summary', label: 'Summary' },
-  { key: 'history', label: 'History' },
-  { key: 'howto', label: 'How to' },
-  { key: 'leaderboard', label: 'Leaderboard' },
+  { key: "summary", label: "Summary" },
+  { key: "history", label: "History" },
+  { key: "howto", label: "How to" },
+  { key: "leaderboard", label: "Leaderboard" },
 ];
 
 export default function ExerciseDetail() {
-  const { id, pickMode: pickModeParam, callerReturnTo } = useLocalSearchParams<{
+  const {
+    id,
+    pickMode: pickModeParam,
+    callerReturnTo,
+  } = useLocalSearchParams<{
     id: string;
     pickMode?: string;
     // The list's own pickMode/returnTo, forwarded through so Back can restore them explicitly.
@@ -35,16 +39,19 @@ export default function ExerciseDetail() {
     // route params, so it isn't affected either way -- the list screen itself never unmounts.
     callerReturnTo?: string;
   }>();
-  const pickMode = pickModeParam === 'true';
+  const pickMode = pickModeParam === "true";
   const [exercise, setExercise] = useState<Exercise | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>('summary');
+  const [activeTab, setActiveTab] = useState<TabKey>("summary");
   const navigation = useNavigation();
 
   function handleBack() {
     const backParams: Record<string, string> = {};
     if (pickModeParam) backParams.pickMode = pickModeParam;
     if (callerReturnTo) backParams.returnTo = callerReturnTo;
-    router.dismissTo({ pathname: '/(member)/profile/exercises', params: backParams });
+    router.dismissTo({
+      pathname: "/(member)/profile/exercises",
+      params: backParams,
+    });
   }
 
   useEffect(() => {
@@ -78,24 +85,49 @@ export default function ExerciseDetail() {
   }
 
   return (
-    <Screen header={header}>
-      <Text style={[typography.title, styles.heading]}>{exercise.name}</Text>
+    <Screen>
+      <HeaderBar
+        left={
+          <Pressable
+            style={{ marginLeft: -18 }}
+            onPress={handleBack}
+            hitSlop={8}
+            testID="back-button"
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </Pressable>
+        }
+        center={<Text style={typography.headerTitle}>{exercise.name}</Text>}
+      />
+
       <View style={styles.tabBar}>
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
-            <Pressable key={tab.key} onPress={() => setActiveTab(tab.key)} style={styles.tabItem}>
-              <Text style={isActive ? styles.tabLabelActive : styles.tabLabelInactive}>{tab.label}</Text>
+            <Pressable
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key)}
+              style={styles.tabItem}
+            >
+              <Text
+                style={
+                  isActive ? styles.tabLabelActive : styles.tabLabelInactive
+                }
+              >
+                {tab.label}
+              </Text>
               {isActive && <View style={styles.tabUnderline} />}
             </Pressable>
           );
         })}
       </View>
       <ScrollView>
-        {activeTab === 'summary' && <SummaryTab exercise={exercise} />}
-        {activeTab === 'history' && <HistoryTab exerciseId={exercise.id} />}
-        {activeTab === 'howto' && <HowToTab exercise={exercise} />}
-        {activeTab === 'leaderboard' && <LeaderboardTab exerciseId={exercise.id} />}
+        {activeTab === "summary" && <SummaryTab exercise={exercise} />}
+        {activeTab === "history" && <HistoryTab exerciseId={exercise.id} />}
+        {activeTab === "howto" && <HowToTab exercise={exercise} />}
+        {activeTab === "leaderboard" && (
+          <LeaderboardTab exerciseId={exercise.id} />
+        )}
       </ScrollView>
     </Screen>
   );
@@ -107,7 +139,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.s,
   },
   tabBar: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: spacing.m,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -118,12 +150,12 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: colors.accent,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 15,
   },
   tabLabelInactive: {
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: "500",
     fontSize: 15,
   },
   tabUnderline: {

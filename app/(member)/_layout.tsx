@@ -1,12 +1,22 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
-import { colors, radius, spacing } from '../../src/theme';
+import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { View, StyleSheet } from "react-native";
+import { colors, radius, spacing } from "../../src/theme";
 
-function TabIcon({ name, focused }: { name: keyof typeof Ionicons.glyphMap; focused: boolean }) {
+function TabIcon({
+  name,
+  focused,
+}: {
+  name: keyof typeof Ionicons.glyphMap;
+  focused: boolean;
+}) {
   return (
     <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Ionicons name={name} size={22} color={focused ? colors.accent : colors.textSecondary} />
+      <Ionicons
+        name={name}
+        size={22}
+        color={focused ? colors.accent : colors.textSecondary}
+      />
     </View>
   );
 }
@@ -16,7 +26,10 @@ export default function MemberTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
+        },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textSecondary,
       }}
@@ -24,22 +37,37 @@ export default function MemberTabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} />,
+          title: "Home",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name={focused ? "home" : "home-outline"}
+              focused={focused}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="workout"
         options={{
-          title: 'Workout',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'barbell' : 'barbell-outline'} focused={focused} />,
+          title: "Workout",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name={focused ? "barbell" : "barbell-outline"}
+              focused={focused}
+            />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} />,
+          title: "Profile",
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name={focused ? "person" : "person-outline"}
+              focused={focused}
+            />
+          ),
         }}
       />
       <Tabs.Screen name="routines" options={{ href: null }} />
