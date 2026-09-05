@@ -6,7 +6,7 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { startSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession } from './api';
+import { startSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession, getWorkoutSummary } from './api';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -180,5 +180,51 @@ describe('finishSession', () => {
     expect(result).toEqual({ error: null });
 
     nowSpy.mockRestore();
+  });
+});
+
+describe('getWorkoutSummary', () => {
+  it('returns the completed-session count and the 5 most recent sessions', async () => {
+    const countNot = jest.fn().mockResolvedValue({ count: 3, error: null });
+    const countSelect = jest.fn(() => ({ not: countNot }));
+
+    const recentLimit = jest.fn().mockResolvedValue({
+      data: [{ id: 's2', started_at: '2026-09-03T00:00:00Z', duration_seconds: 1800 }],
+      error: null,
+    });
+    const recentOrder = jest.fn(() => ({ limit: recentLimit }));
+    const recentNot = jest.fn(() => ({ order: recentOrder }));
+    const recentSelect = jest.fn(() => ({ not: recentNot }));
+
+    (supabase.from as jest.Mock)
+      .mockReturnValueOnce({ select: countSelect })
+      .mockReturnValueOnce({ select: recentSelect });
+
+    const result = await getWorkoutSummary();
+
+    expect(countNot).toHaveBeenCalledWith('ended_at', 'is', null);
+    expect(recentLimit).toHaveBeenCalledWith(5);
+    expect(result).toEqual({
+      count: 3,
+      recent: [{ id: 's2', startedAt: '2026-09-03T00:00:00Z', durationSeconds: 1800 }],
+    });
+  });
+
+  it('returns 0/empty when there are no completed sessions', async () => {
+    const countNot = jest.fn().mockResolvedValue({ count: 0, error: null });
+    const countSelect = jest.fn(() => ({ not: countNot }));
+
+    const recentLimit = jest.fn().mockResolvedValue({ data: [], error: null });
+    const recentOrder = jest.fn(() => ({ limit: recentLimit }));
+    const recentNot = jest.fn(() => ({ order: recentOrder }));
+    const recentSelect = jest.fn(() => ({ not: recentNot }));
+
+    (supabase.from as jest.Mock)
+      .mockReturnValueOnce({ select: countSelect })
+      .mockReturnValueOnce({ select: recentSelect });
+
+    const result = await getWorkoutSummary();
+
+    expect(result).toEqual({ count: 0, recent: [] });
   });
 });

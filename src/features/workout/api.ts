@@ -147,6 +147,44 @@ export async function updateWorkoutSet(
   return { error: error ? error.message : null };
 }
 
+export interface RecentSession {
+  id: string;
+  startedAt: string;
+  durationSeconds: number | null;
+}
+
+export interface WorkoutSummary {
+  count: number;
+  recent: RecentSession[];
+}
+
+interface RecentSessionRow {
+  id: string;
+  started_at: string;
+  duration_seconds: number | null;
+}
+
+export async function getWorkoutSummary(): Promise<WorkoutSummary> {
+  const { count } = await supabase
+    .from('workout_sessions')
+    .select('id', { count: 'exact', head: true })
+    .not('ended_at', 'is', null);
+
+  const { data } = await supabase
+    .from('workout_sessions')
+    .select('id, started_at, duration_seconds')
+    .not('ended_at', 'is', null)
+    .order('started_at', { ascending: false })
+    .limit(5);
+
+  const rows = (data ?? []) as unknown as RecentSessionRow[];
+
+  return {
+    count: count ?? 0,
+    recent: rows.map((row) => ({ id: row.id, startedAt: row.started_at, durationSeconds: row.duration_seconds })),
+  };
+}
+
 export async function finishSession(sessionId: string, startedAt: string): Promise<{ error: string | null }> {
   // Use Date.now() explicitly (rather than `new Date()`) so this respects a mocked clock in
   // tests -- `new Date()` reads the system clock independently of `Date.now()` and does not
