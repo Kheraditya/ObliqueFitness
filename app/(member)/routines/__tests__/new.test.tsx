@@ -9,7 +9,7 @@ jest.mock('../../../../src/features/exercises/api', () => ({
 }));
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), replace: jest.fn(), setParams: jest.fn() },
+  router: { push: jest.fn(), replace: jest.fn(), setParams: jest.fn(), back: jest.fn() },
   useLocalSearchParams: jest.fn(() => ({})),
 }));
 
@@ -28,7 +28,7 @@ describe('NewRoutine', () => {
 
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Routine name'), 'Push Day');
+    await fireEvent.changeText(screen.getByPlaceholderText('Routine title'), 'Push Day');
     await fireEvent.press(screen.getByText('Save'));
 
     expect(createRoutine).toHaveBeenCalledWith('Push Day', [
@@ -45,10 +45,34 @@ describe('NewRoutine', () => {
 
     (router.replace as jest.Mock).mockClear();
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Routine name'), 'Push Day');
+    await fireEvent.changeText(screen.getByPlaceholderText('Routine title'), 'Push Day');
     await fireEvent.press(screen.getByText('Save'));
 
     await waitFor(() => expect(screen.getByText('insert failed')).toBeTruthy());
     expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it('shows the empty state and navigates to the exercise picker when Add exercise is pressed', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
+
+    await render(<NewRoutine />);
+
+    expect(screen.getByText('Get started by adding an exercise to your routine.')).toBeTruthy();
+
+    await fireEvent.press(screen.getByText('Add exercise'));
+
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/(member)/profile/exercises',
+      params: { pickMode: 'true', returnTo: '/(member)/routines/new' },
+    });
+  });
+
+  it('navigates back when Cancel is pressed', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
+
+    await render(<NewRoutine />);
+    await fireEvent.press(screen.getByText('Cancel'));
+
+    expect(router.back).toHaveBeenCalled();
   });
 });

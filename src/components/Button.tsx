@@ -9,11 +9,16 @@ interface ButtonProps {
   disabled?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
   align?: 'center' | 'left';
+  // Overrides the variant's default text (and icon) color -- e.g. a danger-red label on an
+  // otherwise ordinary "dark" button, without needing a whole new variant for one color.
+  textColor?: string;
 }
 
-export function Button({ title, onPress, variant = 'primary', disabled = false, icon, align = 'center' }: ButtonProps) {
+export function Button({ title, onPress, variant = 'primary', disabled = false, icon, align = 'center', textColor }: ButtonProps) {
   const isPrimary = variant === 'primary';
   const isDark = variant === 'dark';
+  const defaultTextColor = isPrimary ? colors.textPrimary : isDark ? colors.textPrimary : colors.accent;
+  const resolvedTextColor = textColor ?? defaultTextColor;
   return (
     <Pressable
       onPress={onPress}
@@ -27,8 +32,8 @@ export function Button({ title, onPress, variant = 'primary', disabled = false, 
       ]}
     >
       <View style={styles.content}>
-        {icon && <Ionicons name={icon} size={18} color={isPrimary ? colors.textPrimary : isDark ? colors.textPrimary : colors.accent} style={styles.icon} />}
-        <Text style={isPrimary ? styles.primaryText : isDark ? styles.darkText : styles.secondaryText}>{title}</Text>
+        {icon && <Ionicons name={icon} size={18} color={resolvedTextColor} style={styles.icon} />}
+        <Text style={[styles.text, isPrimary && styles.textBold, { color: resolvedTextColor }]}>{title}</Text>
       </View>
     </Pressable>
   );
@@ -70,19 +75,11 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.4,
   },
-  primaryText: {
-    color: colors.textPrimary,
+  text: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  textBold: {
     fontWeight: '700',
-  },
-  secondaryText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  darkText: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

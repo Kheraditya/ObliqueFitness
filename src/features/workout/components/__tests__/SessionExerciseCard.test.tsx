@@ -39,4 +39,20 @@ describe('SessionExerciseCard', () => {
 
     expect(onUpdateSet).toHaveBeenCalledWith('set1', 85, 8, null);
   });
+
+  it('hides the RPE column and input when showRpe is false, and logs null for it', async () => {
+    const onLogSet = jest.fn();
+    await render(
+      <SessionExerciseCard exercise={exercise} sets={[]} onLogSet={onLogSet} onUpdateSet={jest.fn()} showRpe={false} />
+    );
+
+    expect(screen.queryByText('RPE')).toBeNull();
+    expect(screen.getAllByPlaceholderText('-')).toHaveLength(2); // weight, reps only -- no third RPE input
+
+    await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
+    await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
+    await fireEvent.press(screen.getByText('Add Set'));
+
+    expect(onLogSet).toHaveBeenCalledWith(100, 5, null);
+  });
 });

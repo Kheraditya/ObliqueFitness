@@ -9,6 +9,9 @@ interface SessionExerciseCardProps {
   sets: LoggedSet[];
   onLogSet: (weight: number | null, reps: number | null, rpe: number | null) => void;
   onUpdateSet: (setId: string, weight: number | null, reps: number | null, rpe: number | null) => void;
+  // Controlled by the "RPE Tracking" workout setting -- defaults on so every existing caller
+  // (and every prior test) keeps behaving exactly as before without passing this explicitly.
+  showRpe?: boolean;
 }
 
 function parseNum(value: string): number | null {
@@ -17,7 +20,7 @@ function parseNum(value: string): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: SessionExerciseCardProps) {
+export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet, showRpe = true }: SessionExerciseCardProps) {
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [rpe, setRpe] = useState('');
@@ -55,7 +58,7 @@ export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: S
         <Text style={[styles.columnHeader, styles.setColumnHeader]}>SET</Text>
         <Text style={styles.columnHeader}>KG</Text>
         <Text style={styles.columnHeader}>REPS</Text>
-        <Text style={styles.columnHeader}>RPE</Text>
+        {showRpe && <Text style={styles.columnHeader}>RPE</Text>}
       </View>
       {sets.map((set) => (
         <Pressable key={set.id} onPress={() => startEditing(set)} style={styles.setRow}>
@@ -64,7 +67,7 @@ export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: S
           </View>
           <Text style={styles.setValue}>{set.weight ?? '-'}</Text>
           <Text style={styles.setValue}>{set.reps ?? '-'}</Text>
-          <Text style={styles.setValue}>{set.rpe ?? '-'}</Text>
+          {showRpe && <Text style={styles.setValue}>{set.rpe ?? '-'}</Text>}
         </Pressable>
       ))}
       <View style={styles.inputRow}>
@@ -87,14 +90,16 @@ export function SessionExerciseCard({ exercise, sets, onLogSet, onUpdateSet }: S
           onChangeText={setReps}
           keyboardType="numeric"
         />
-        <TextInput
-          style={styles.input}
-          placeholder="-"
-          placeholderTextColor={colors.textSecondary}
-          value={rpe}
-          onChangeText={setRpe}
-          keyboardType="numeric"
-        />
+        {showRpe && (
+          <TextInput
+            style={styles.input}
+            placeholder="-"
+            placeholderTextColor={colors.textSecondary}
+            value={rpe}
+            onChangeText={setRpe}
+            keyboardType="numeric"
+          />
+        )}
       </View>
       <Button title={editingSetId ? 'Update Set' : 'Add Set'} variant="dark" icon="add" onPress={handleConfirm} />
     </View>

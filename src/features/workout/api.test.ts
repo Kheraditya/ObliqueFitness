@@ -6,7 +6,7 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { startSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession, getWorkoutSummary, getWorkoutDates } from './api';
+import { startSession, discardSession, getSessionExercises, getLoggedSets, logSet, updateWorkoutSet, finishSession, getWorkoutSummary, getWorkoutDates } from './api';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -33,6 +33,30 @@ describe('startSession', () => {
     expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
     expect(insert).toHaveBeenCalledWith({ user_id: 'u1', routine_id: 'r1' });
     expect(result).toEqual({ id: 's1', error: null });
+  });
+});
+
+describe('discardSession', () => {
+  it('deletes the workout_sessions row by id', async () => {
+    const eq = jest.fn().mockResolvedValue({ error: null });
+    const del = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ delete: del });
+
+    const result = await discardSession('s1');
+
+    expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
+    expect(eq).toHaveBeenCalledWith('id', 's1');
+    expect(result).toEqual({ error: null });
+  });
+
+  it('returns the error message on failure', async () => {
+    const eq = jest.fn().mockResolvedValue({ error: { message: 'boom' } });
+    const del = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ delete: del });
+
+    const result = await discardSession('s1');
+
+    expect(result).toEqual({ error: 'boom' });
   });
 });
 

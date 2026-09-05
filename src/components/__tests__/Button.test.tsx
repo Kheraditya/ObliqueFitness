@@ -21,4 +21,11 @@ describe('Button', () => {
     await render(<Button title="Start Empty Workout" onPress={() => {}} variant="dark" icon="add" align="left" />);
     expect(screen.getByText('Start Empty Workout')).toBeTruthy();
   });
+
+  it('applies a textColor override instead of the variant default', async () => {
+    await render(<Button title="Discard Workout" onPress={() => {}} variant="dark" textColor="#FF453A" />);
+    const label = screen.getByText('Discard Workout');
+    const flattened = Array.isArray(label.props.style) ? Object.assign({}, ...label.props.style) : label.props.style;
+    expect(flattened.color).toBe('#FF453A');
+  });
 });

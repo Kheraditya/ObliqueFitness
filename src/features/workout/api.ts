@@ -45,6 +45,11 @@ export async function startSession(routineId: string | null): Promise<{ id: stri
   return { id: (data as { id: string }).id, error: null };
 }
 
+export async function discardSession(sessionId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('workout_sessions').delete().eq('id', sessionId);
+  return { error: error ? error.message : null };
+}
+
 export async function getSessionExercises(
   sessionId: string
 ): Promise<{ exercises: SessionExercise[]; startedAt: string }> {
