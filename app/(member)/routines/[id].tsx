@@ -5,6 +5,8 @@ import { VictoryChart, VictoryBar, VictoryAxis, VictoryTheme } from 'victory-nat
 import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
 import { ErrorText } from '../../../src/components/ErrorText';
+import { PillTabs } from '../../../src/components/PillTabs';
+import { ListItem } from '../../../src/components/ListItem';
 import { getRoutine, getRoutineVolumeHistory } from '../../../src/features/routines/api';
 import { startSession } from '../../../src/features/workout/api';
 import type { Routine, VolumeHistoryPoint } from '../../../src/features/routines/types';
@@ -15,6 +17,8 @@ export default function RoutineDetail() {
   const [routine, setRoutine] = useState<Routine | null>(null);
   const [history, setHistory] = useState<VolumeHistoryPoint[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Presentational only for now — chart data is volume-only until Reps/Duration metrics exist.
+  const [metric, setMetric] = useState('volume');
 
   useEffect(() => {
     if (!id) return;
@@ -47,6 +51,15 @@ export default function RoutineDetail() {
       <Button title="Start Routine" onPress={handleStartRoutine} />
       {error && <ErrorText>{error}</ErrorText>}
       <Button title="Edit Routine" variant="secondary" onPress={() => router.push(`/(member)/routines/${routine.id}/edit`)} />
+      <PillTabs
+        options={[
+          { key: 'volume', label: 'Volume' },
+          { key: 'reps', label: 'Reps' },
+          { key: 'duration', label: 'Duration' },
+        ]}
+        value={metric}
+        onChange={setMetric}
+      />
       <View style={styles.chartCard}>
         {history.length === 0 ? (
           <Text style={typography.subtitle}>No data yet.</Text>
@@ -60,12 +73,11 @@ export default function RoutineDetail() {
       </View>
       <Text style={[typography.title, styles.sectionHeading]}>Exercises</Text>
       {routine.exercises.map((ex) => (
-        <View key={ex.id} style={styles.exerciseRow}>
-          <Text style={typography.body}>{ex.exerciseName}</Text>
-          <Text style={typography.label}>
-            {ex.targetSets} sets{ex.supersetGroup != null ? ` · Superset ${ex.supersetGroup}` : ''}
-          </Text>
-        </View>
+        <ListItem
+          key={ex.id}
+          title={ex.exerciseName}
+          subtitle={`${ex.targetSets} sets${ex.supersetGroup != null ? ` · Superset ${ex.supersetGroup}` : ''}`}
+        />
       ))}
     </Screen>
   );
@@ -88,10 +100,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginTop: spacing.l,
     marginBottom: spacing.s,
-  },
-  exerciseRow: {
-    paddingVertical: spacing.s,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
 });

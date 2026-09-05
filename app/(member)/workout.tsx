@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, Text, StyleSheet } from 'react-native';
+import { FlatList, Pressable, Text, View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
 import { Button } from '../../src/components/Button';
 import { ErrorText } from '../../src/components/ErrorText';
+import { DashboardTile } from '../../src/components/DashboardTile';
 import { listRoutines } from '../../src/features/routines/api';
 import { startSession } from '../../src/features/workout/api';
 import { typography, spacing, colors } from '../../src/theme';
@@ -31,8 +32,10 @@ export default function Workout() {
       <Button title="Start Empty Workout" onPress={handleStartEmpty} variant="dark" icon="add" align="left" />
       {error && <ErrorText>{error}</ErrorText>}
       <Text style={[typography.title, styles.sectionHeading]}>Routines</Text>
-      <Button title="New Routine" variant="secondary" onPress={() => router.push('/(member)/routines/new')} />
-      <Button title="Explore" variant="secondary" onPress={() => {}} disabled />
+      <View style={styles.tileRow}>
+        <DashboardTile label="New Routine" icon="clipboard-outline" onPress={() => router.push('/(member)/routines/new')} />
+        <DashboardTile label="Explore" icon="search-outline" onPress={() => {}} disabled />
+      </View>
       <FlatList
         data={routines}
         keyExtractor={(item) => item.id}
@@ -54,6 +57,11 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 20,
     marginTop: spacing.l,
+    marginBottom: spacing.s,
+  },
+  tileRow: {
+    flexDirection: 'row',
+    gap: spacing.s,
     marginBottom: spacing.s,
   },
   row: {
