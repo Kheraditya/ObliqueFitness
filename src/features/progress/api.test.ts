@@ -18,24 +18,26 @@ afterEach(() => {
 
 describe('getMuscleVolumes', () => {
   it('sums weight*reps per primary muscle across the last 7 days', async () => {
-    const gte = jest.fn().mockResolvedValue({
+    const not = jest.fn().mockResolvedValue({
       data: [
         {
           started_at: '2026-09-03T00:00:00Z',
           workout_sets: [
-            { weight: 100, reps: 5, exercises: { primary_muscles: ['chest', 'triceps'] } },
-            { weight: 50, reps: 10, exercises: { primary_muscles: ['triceps'] } },
+            { weight: 100, reps: 5, exercises: { primary_muscles: ['chest', 'triceps'], secondary_muscles: [] } },
+            { weight: 50, reps: 10, exercises: { primary_muscles: ['triceps'], secondary_muscles: [] } },
           ],
         },
       ],
       error: null,
     });
+    const gte = jest.fn(() => ({ not }));
     const select = jest.fn(() => ({ gte }));
     (supabase.from as jest.Mock).mockReturnValue({ select });
 
     const result = await getMuscleVolumes();
 
     expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
+    expect(not).toHaveBeenCalledWith('ended_at', 'is', null);
     expect(result).toEqual(
       expect.arrayContaining([
         { muscle: 'chest', volume: 500 },
@@ -45,13 +47,38 @@ describe('getMuscleVolumes', () => {
   });
 
   it('returns an empty array on error', async () => {
-    const gte = jest.fn().mockResolvedValue({ data: null, error: { message: 'boom' } });
+    const not = jest.fn().mockResolvedValue({ data: null, error: { message: 'boom' } });
+    const gte = jest.fn(() => ({ not }));
     const select = jest.fn(() => ({ gte }));
     (supabase.from as jest.Mock).mockReturnValue({ select });
 
     const result = await getMuscleVolumes();
 
     expect(result).toEqual([]);
+  });
+
+  it('highlights primary and secondary muscles for bodyweight sets with no kg value', async () => {
+    const not = jest.fn().mockResolvedValue({
+      data: [{
+        started_at: '2026-09-03T00:00:00Z',
+        ended_at: '2026-09-03T01:00:00Z',
+        workout_sets: [{
+          weight: null,
+          reps: 12,
+          exercises: { primary_muscles: ['Chest'], secondary_muscles: ['Shoulders', 'Triceps'] },
+        }],
+      }],
+      error: null,
+    });
+    const gte = jest.fn(() => ({ not }));
+    (supabase.from as jest.Mock).mockReturnValue({ select: jest.fn(() => ({ gte })) });
+
+    const result = await getMuscleVolumes();
+    expect(result).toEqual(expect.arrayContaining([
+      { muscle: 'chest', volume: 12 },
+      { muscle: 'shoulders', volume: 6 },
+      { muscle: 'triceps', volume: 6 },
+    ]));
   });
 });
 

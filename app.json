@@ -5,30 +5,52 @@
     "version": "1.0.0",
     "scheme": "obliquefitness",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/oblique-icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/oblique-icon-foreground.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#050607"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_SLEEP"
+      ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#050607",
+        "foregroundImage": "./assets/oblique-icon-foreground.png",
+        "monochromeImage": "./assets/oblique-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.kheraditya.obliquefitness"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/oblique-icon.png"
     },
     "plugins": [
       "expo-router",
       "expo-status-bar",
       "expo-asset",
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 26
+          }
+        }
+      ]
     ]
   }
 }

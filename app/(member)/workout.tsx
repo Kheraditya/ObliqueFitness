@@ -1,16 +1,21 @@
-import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Screen } from '../../src/components/Screen';
-import { Button } from '../../src/components/Button';
-import { ErrorText } from '../../src/components/ErrorText';
-import { DashboardTile } from '../../src/components/DashboardTile';
-import { RoutineCard } from '../../src/features/routines/components/RoutineCard';
-import { ActiveWorkoutBar } from '../../src/features/workout/components/ActiveWorkoutBar';
-import { listRoutines, deleteRoutine } from '../../src/features/routines/api';
-import { startSession, getActiveSession, getSessionExercises, discardSession } from '../../src/features/workout/api';
-import { colors, radius, typography, spacing } from '../../src/theme';
+import { useCallback, useState } from "react";
+import { Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Screen } from "../../src/components/Screen";
+import { Button } from "../../src/components/Button";
+import { ErrorText } from "../../src/components/ErrorText";
+import { DashboardTile } from "../../src/components/DashboardTile";
+import { RoutineCard } from "../../src/features/routines/components/RoutineCard";
+import { ActiveWorkoutBar } from "../../src/features/workout/components/ActiveWorkoutBar";
+import { listRoutines, deleteRoutine } from "../../src/features/routines/api";
+import {
+  startSession,
+  getActiveSession,
+  getSessionExercises,
+  discardSession,
+} from "../../src/features/workout/api";
+import { colors, radius, typography, spacing } from "../../src/theme";
 
 interface ActiveSessionInfo {
   id: string;
@@ -19,10 +24,14 @@ interface ActiveSessionInfo {
 }
 
 export default function Workout() {
-  const [routines, setRoutines] = useState<{ id: string; name: string; exercisePreview: string }[]>([]);
+  const [routines, setRoutines] = useState<
+    { id: string; name: string; exercisePreview: string }[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [routinesExpanded, setRoutinesExpanded] = useState(true);
-  const [activeSession, setActiveSession] = useState<ActiveSessionInfo | null>(null);
+  const [activeSession, setActiveSession] = useState<ActiveSessionInfo | null>(
+    null,
+  );
 
   const refresh = useCallback(() => {
     listRoutines().then(setRoutines);
@@ -46,9 +55,12 @@ export default function Workout() {
         // re-render -- refocusing without any real change should be a no-op, not a state churn.
         const exerciseCount = exercises.length;
         setActiveSession((prev) =>
-          prev && prev.id === session.id && prev.startedAt === session.startedAt && prev.exerciseCount === exerciseCount
+          prev &&
+          prev.id === session.id &&
+          prev.startedAt === session.startedAt &&
+          prev.exerciseCount === exerciseCount
             ? prev
-            : { id: session.id, startedAt: session.startedAt, exerciseCount }
+            : { id: session.id, startedAt: session.startedAt, exerciseCount },
         );
       });
     });
@@ -104,47 +116,77 @@ export default function Workout() {
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={typography.title}>Workout</Text>
-          <View style={styles.chevronBadge}>
-            <Ionicons name="chevron-down" size={16} color={colors.textPrimary} />
-          </View>
         </View>
         <Pressable onPress={refresh} hitSlop={8}>
           <Ionicons name="refresh" size={22} color={colors.textPrimary} />
         </Pressable>
       </View>
-      <Button title="Start Empty Workout" onPress={handleStartEmpty} variant="dark" icon="add" align="left" />
+      <Button
+        title="Start Empty Workout"
+        onPress={handleStartEmpty}
+        variant="dark"
+        icon="add"
+        align="left"
+      />
       {error && <ErrorText>{error}</ErrorText>}
       <View style={styles.sectionHeadingRow}>
         <Text style={[typography.title, styles.sectionHeading]}>Routines</Text>
         <View style={styles.folderIconWrap}>
-          <Ionicons name="folder-outline" size={20} color={colors.textSecondary} />
+          <Ionicons
+            name="folder-outline"
+            size={20}
+            color={colors.textSecondary}
+          />
           <View style={styles.folderAddBadge}>
             <Ionicons name="add" size={10} color={colors.textPrimary} />
           </View>
         </View>
       </View>
       <View style={styles.tileRow}>
-        <DashboardTile label="New Routine" icon="clipboard-outline" onPress={() => router.push('/(member)/routines/new')} />
-        <DashboardTile label="Explore" icon="search-outline" onPress={() => {}} disabled />
+        <DashboardTile
+          label="New Routine"
+          icon="clipboard-outline"
+          onPress={() => router.push("/(member)/routines/new")}
+        />
+        <DashboardTile
+          label="Explore"
+          icon="search-outline"
+          onPress={() => {}}
+          disabled
+        />
       </View>
 
-      <Pressable style={styles.myRoutinesRow} onPress={() => setRoutinesExpanded((prev) => !prev)}>
-        <Ionicons name={routinesExpanded ? 'caret-down' : 'caret-forward'} size={13} color={colors.textSecondary} />
-        <Text style={styles.myRoutinesLabel}>My Routines ({routines.length})</Text>
+      <Pressable
+        style={styles.myRoutinesRow}
+        onPress={() => setRoutinesExpanded((prev) => !prev)}
+      >
+        <Ionicons
+          name={routinesExpanded ? "caret-down" : "caret-forward"}
+          size={13}
+          color={colors.textSecondary}
+        />
+        <Text style={styles.myRoutinesLabel}>
+          My Routines ({routines.length})
+        </Text>
       </Pressable>
 
       {routinesExpanded && (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={activeSession ? styles.scrollContentWithBar : undefined}
+          contentContainerStyle={
+            activeSession ? styles.scrollContentWithBar : undefined
+          }
         >
           {routines.map((routine) => (
             <RoutineCard
               key={routine.id}
               name={routine.name}
               exercisePreview={routine.exercisePreview}
+              onOpen={() => router.push(`/(member)/routines/${routine.id}`)}
               onStart={() => handleStartRoutine(routine.id)}
-              onEdit={() => router.push(`/(member)/routines/${routine.id}/edit`)}
+              onEdit={() =>
+                router.push(`/(member)/routines/${routine.id}/edit`)
+              }
               onDelete={() => handleDeleteRoutine(routine.id)}
             />
           ))}
@@ -172,21 +214,21 @@ const styles = StyleSheet.create({
     paddingBottom: 88,
   },
   activeBarWrap: {
-    position: 'absolute',
+    position: "absolute",
     left: spacing.l,
     right: spacing.l,
     bottom: spacing.m,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: spacing.l,
     marginBottom: spacing.m,
   },
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.s,
   },
   chevronBadge: {
@@ -194,13 +236,13 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: radius.full,
     backgroundColor: colors.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   sectionHeadingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: spacing.l,
     marginBottom: spacing.s,
   },
@@ -212,30 +254,30 @@ const styles = StyleSheet.create({
     height: 24,
   },
   folderAddBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: -4,
     right: -6,
     width: 14,
     height: 14,
     borderRadius: radius.full,
     backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   tileRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.s,
     marginBottom: spacing.m,
   },
   myRoutinesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.s,
     marginBottom: spacing.m,
   },
   myRoutinesLabel: {
     color: colors.textSecondary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

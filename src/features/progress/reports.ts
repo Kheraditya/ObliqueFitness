@@ -21,7 +21,21 @@ interface PeriodSessionRow {
 }
 
 interface MuscleSetRow {
-  workout_sets: { exercises: { primary_muscles: string[] } | null }[];
+  workout_sets: { exercises: { primary_muscles: string[]; secondary_muscles?: string[] } | null }[];
+}
+
+interface MainExerciseSessionRow {
+  workout_sets: {
+    exercise_id: string;
+    exercises: { name: string; images: string[] } | null;
+  }[];
+}
+
+export interface MainExerciseStat {
+  id: string;
+  name: string;
+  imageUri?: string;
+  setCount: number;
 }
 
 interface MonthlySessionRow {
@@ -61,7 +75,7 @@ export async function getPeriodSummary(startISO: string, endISO: string): Promis
 export async function getSetsCountByMuscle(startISO: string, endISO: string): Promise<{ muscle: string; sets: number }[]> {
   const { data } = await supabase
     .from('workout_sessions')
-    .select('ended_at, workout_sets(exercises(primary_muscles))')
+    .select('ended_at, workout_sets(exercises(primary_muscles, secondary_muscles))')
     .gte('started_at', startISO)
     .lt('started_at', endISO)
     .not('ended_at', 'is', null);
@@ -71,13 +85,44 @@ export async function getSetsCountByMuscle(startISO: string, endISO: string): Pr
 
   for (const row of rows) {
     for (const set of row.workout_sets) {
-      for (const muscle of set.exercises?.primary_muscles ?? []) {
+      const allMuscles = new Set([
+        ...(set.exercises?.primary_muscles ?? []),
+        ...(set.exercises?.secondary_muscles ?? []),
+      ].map((muscle) => muscle.trim().toLowerCase()));
+      for (const muscle of allMuscles) {
         totals.set(muscle, (totals.get(muscle) ?? 0) + 1);
       }
     }
   }
 
   return Array.from(totals.entries()).map(([muscle, sets]) => ({ muscle, sets }));
+}
+
+export async function getMainExercises(startISO: string): Promise<MainExerciseStat[]> {
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('workout_sets(exercise_id, exercises(name, images))')
+    .gte('started_at', startISO)
+    .not('ended_at', 'is', null);
+  if (error || !data) return [];
+
+  const totals = new Map<string, MainExerciseStat>();
+  for (const session of data as unknown as MainExerciseSessionRow[]) {
+    for (const set of session.workout_sets) {
+      const existing = totals.get(set.exercise_id);
+      if (existing) {
+        existing.setCount += 1;
+      } else {
+        totals.set(set.exercise_id, {
+          id: set.exercise_id,
+          name: set.exercises?.name ?? 'Unknown exercise',
+          ...(set.exercises?.images?.[0] ? { imageUri: set.exercises.images[0] } : {}),
+          setCount: 1,
+        });
+      }
+    }
+  }
+  return Array.from(totals.values()).sort((a, b) => b.setCount - a.setCount || a.name.localeCompare(b.name));
 }
 
 export async function getMonthlyTotals(monthsBack: number): Promise<MonthlyTotal[]> {

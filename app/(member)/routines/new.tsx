@@ -24,7 +24,15 @@ export default function NewRoutine() {
       if (!exercise) return;
       setExercises((prev) => [
         ...prev,
-        { exerciseId: exercise.id, exerciseName: exercise.name, targetSets: 3, restSeconds: 90, supersetGroup: null },
+        {
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          ...(exercise.images?.[0] ? { imageUri: exercise.images[0] } : {}),
+          notes: '',
+          targetSets: 1,
+          restSeconds: 0,
+          supersetGroup: null,
+        },
       ]);
       router.setParams({ addExerciseId: undefined });
     });
@@ -64,28 +72,37 @@ export default function NewRoutine() {
         />
       }
     >
-      <TextInput
-        style={styles.titleInput}
-        placeholder="Routine title"
-        placeholderTextColor={colors.textSecondary}
-        value={name}
-        onChangeText={setName}
-      />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
+      >
+        <TextInput
+          style={styles.titleInput}
+          placeholder="Routine title"
+          placeholderTextColor={colors.textSecondary}
+          value={name}
+          onChangeText={setName}
+        />
 
-      {error && <ErrorText>{error}</ErrorText>}
+        {error && <ErrorText>{error}</ErrorText>}
 
-      {exercises.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="barbell-outline" size={52} color={colors.textSecondary} />
-          <Text style={styles.emptySubtitle}>Get started by adding an exercise to your routine.</Text>
-          <Button title="Add exercise" icon="add" onPress={handleAddExercise} />
-        </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <RoutineExerciseList exercises={exercises} onChange={setExercises} />
-          <Button title="Add Exercise" variant="secondary" onPress={handleAddExercise} />
-        </ScrollView>
-      )}
+        {exercises.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="barbell-outline" size={36} color={colors.accent} />
+            </View>
+            <Text style={styles.emptyTitle}>Build your routine</Text>
+            <Text style={styles.emptySubtitle}>Get started by adding an exercise to your routine.</Text>
+            <Button title="Add exercise" icon="add" onPress={handleAddExercise} style={styles.emptyButton} />
+          </View>
+        ) : (
+          <>
+            <RoutineExerciseList exercises={exercises} onChange={setExercises} />
+            <Button title="Add exercise" icon="add" onPress={handleAddExercise} style={styles.addExerciseButton} />
+          </>
+        )}
+      </ScrollView>
     </Screen>
   );
 }
@@ -114,20 +131,33 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   titleInput: {
-    fontSize: 22,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '700',
     color: colors.textPrimary,
-    paddingVertical: spacing.m,
+    paddingVertical: spacing.l,
     marginTop: spacing.l,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     marginBottom: spacing.m,
   },
   emptyState: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.s,
+    paddingTop: 96,
+  },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.m,
+  },
+  emptyTitle: {
+    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '700',
   },
   emptySubtitle: {
     color: colors.textSecondary,
@@ -135,5 +165,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.m,
     paddingHorizontal: spacing.l,
+  },
+  emptyButton: {
+    minWidth: 190,
+  },
+  addExerciseButton: {
+    marginTop: spacing.l,
+    marginBottom: spacing.xl,
+    minHeight: 52,
+  },
+  scrollContent: {
+    paddingBottom: spacing.xl,
   },
 });

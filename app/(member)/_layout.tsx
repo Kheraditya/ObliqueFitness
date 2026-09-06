@@ -1,7 +1,9 @@
-import { Tabs } from "expo-router";
-import { View, StyleSheet, type ColorValue } from "react-native";
+import { useEffect } from "react";
+import { router, Tabs } from "expo-router";
+import { AppState, View, StyleSheet, type ColorValue } from "react-native";
 import Svg, { Circle, Line, Path } from "react-native-svg";
 import { colors, radius, spacing } from "../../src/theme";
+import { getCurrentUserProfile } from "../../src/features/auth/api";
 
 function TabIcon({
   icon,
@@ -88,6 +90,24 @@ function TabIcon({
 }
 
 export default function MemberTabsLayout() {
+  useEffect(() => {
+    let active = true;
+    async function verifyAccess() {
+      const profile = await getCurrentUserProfile();
+      if (active && profile?.app_access_enabled === false) router.replace('/(auth)/access-paused');
+    }
+    verifyAccess();
+    const interval = setInterval(verifyAccess, 30000);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') verifyAccess();
+    });
+    return () => {
+      active = false;
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
@@ -132,6 +152,10 @@ export default function MemberTabsLayout() {
         name="profile"
         options={{
           title: "Profile",
+          // Exercise selection is hosted inside the Profile stack. Reset that nested stack
+          // after leaving the tab so a later Profile-tab press opens the overview, not the
+          // last exercise picker/list route visited from a workout flow.
+          popToTopOnBlur: true,
           tabBarIcon: ({ focused, color, size }) => (
             <TabIcon
               icon="profile"

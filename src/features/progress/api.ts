@@ -12,7 +12,11 @@ export interface HomeSummary {
 interface SessionWithSetsRow {
   started_at: string;
   ended_at: string | null;
-  workout_sets: { weight: number | null; reps: number | null; exercises: { primary_muscles: string[] } | null }[];
+  workout_sets: {
+    weight: number | null;
+    reps: number | null;
+    exercises: { primary_muscles: string[]; secondary_muscles?: string[] } | null;
+  }[];
 }
 
 interface StreakSessionRow {
@@ -40,9 +44,20 @@ function sumMuscleVolumes(rows: SessionWithSetsRow[]): { muscle: string; volume:
 
   for (const row of rows) {
     for (const set of row.workout_sets) {
-      const volume = (set.weight ?? 0) * (set.reps ?? 0);
-      for (const muscle of set.exercises?.primary_muscles ?? []) {
-        totals.set(muscle, (totals.get(muscle) ?? 0) + volume);
+      const weightedVolume = (set.weight ?? 0) * (set.reps ?? 0);
+      // Bodyweight and duration-style entries often have no kg value. A completed set still
+      // needs a non-zero score or its muscle receives the same fill as an untrained muscle.
+      const effort = weightedVolume > 0 ? weightedVolume : Math.max(set.reps ?? 0, 1);
+      const primary = set.exercises?.primary_muscles ?? [];
+      const secondary = set.exercises?.secondary_muscles ?? [];
+      for (const rawMuscle of primary) {
+        const muscle = rawMuscle.trim().toLowerCase();
+        totals.set(muscle, (totals.get(muscle) ?? 0) + effort);
+      }
+      for (const rawMuscle of secondary) {
+        const muscle = rawMuscle.trim().toLowerCase();
+        if (primary.some((value) => value.trim().toLowerCase() === muscle)) continue;
+        totals.set(muscle, (totals.get(muscle) ?? 0) + effort * 0.5);
       }
     }
   }
@@ -53,8 +68,9 @@ function sumMuscleVolumes(rows: SessionWithSetsRow[]): { muscle: string; volume:
 export async function getMuscleVolumes(): Promise<{ muscle: string; volume: number }[]> {
   const { data, error } = await supabase
     .from('workout_sessions')
-    .select('started_at, workout_sets(weight, reps, exercises(primary_muscles))')
-    .gte('started_at', daysAgoISOString(7));
+    .select('started_at, ended_at, workout_sets(weight, reps, exercises(primary_muscles, secondary_muscles))')
+    .gte('started_at', daysAgoISOString(7))
+    .not('ended_at', 'is', null);
 
   if (error || !data) return [];
 

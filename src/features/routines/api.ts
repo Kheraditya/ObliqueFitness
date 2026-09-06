@@ -1,5 +1,11 @@
 import { supabase } from '../../lib/supabase';
-import type { Routine, RoutineExercise, RoutineExerciseDraft, VolumeHistoryPoint } from './types';
+import type {
+  Routine,
+  RoutineExercise,
+  RoutineExerciseDraft,
+  RoutinePerformance,
+  VolumeHistoryPoint,
+} from './types';
 
 interface RoutineExerciseRow {
   id: string;
@@ -7,8 +13,9 @@ interface RoutineExerciseRow {
   order: number;
   target_sets: number;
   rest_seconds: number;
+  notes: string | null;
   superset_group: number | null;
-  exercises: { name: string } | null;
+  exercises: { name: string; images: string[] } | null;
 }
 
 interface RoutineListRow {
@@ -43,7 +50,7 @@ export async function getRoutine(id: string): Promise<Routine | null> {
 
   const { data } = await supabase
     .from('routine_exercises')
-    .select('id, exercise_id, order, target_sets, rest_seconds, superset_group, exercises(name)')
+    .select('id, exercise_id, order, target_sets, rest_seconds, notes, superset_group, exercises(name, images)')
     .eq('routine_id', id)
     .order('order', { ascending: true });
 
@@ -53,6 +60,8 @@ export async function getRoutine(id: string): Promise<Routine | null> {
     id: row.id,
     exerciseId: row.exercise_id,
     exerciseName: row.exercises?.name ?? '',
+    imageUri: row.exercises?.images?.[0],
+    notes: row.notes ?? '',
     order: row.order,
     targetSets: row.target_sets,
     restSeconds: row.rest_seconds,
@@ -96,6 +105,7 @@ export async function createRoutine(
       order: index,
       target_sets: ex.targetSets,
       rest_seconds: ex.restSeconds,
+      notes: ex.notes ?? null,
       superset_group: ex.supersetGroup,
     }));
     const { error: exercisesError } = await supabase.from('routine_exercises').insert(rows);
@@ -123,6 +133,7 @@ export async function updateRoutine(
       order: index,
       target_sets: ex.targetSets,
       rest_seconds: ex.restSeconds,
+      notes: ex.notes ?? null,
       superset_group: ex.supersetGroup,
     }));
     const { error: insertError } = await supabase.from('routine_exercises').insert(rows);
@@ -134,14 +145,16 @@ export async function updateRoutine(
 
 interface VolumeHistoryRow {
   started_at: string;
+  duration_seconds: number | null;
   workout_sets: { weight: number | null; reps: number | null }[];
 }
 
 export async function getRoutineVolumeHistory(routineId: string): Promise<VolumeHistoryPoint[]> {
   const { data, error } = await supabase
     .from('workout_sessions')
-    .select('started_at, workout_sets(weight, reps)')
+    .select('started_at, duration_seconds, workout_sets(weight, reps)')
     .eq('routine_id', routineId)
+    .not('ended_at', 'is', null)
     .order('started_at', { ascending: true });
 
   if (error || !data) return [];
@@ -151,5 +164,45 @@ export async function getRoutineVolumeHistory(routineId: string): Promise<Volume
   return rows.map((row) => ({
     date: row.started_at,
     volume: row.workout_sets.reduce((sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0), 0),
+    reps: row.workout_sets.reduce((sum, s) => sum + (s.reps ?? 0), 0),
+    durationSeconds: row.duration_seconds ?? 0,
   }));
+}
+
+interface LatestPerformanceRow {
+  started_at: string;
+  duration_seconds: number | null;
+  workout_sets: {
+    exercise_id: string;
+    set_number: number;
+    weight: number | null;
+    reps: number | null;
+  }[];
+}
+
+export async function getLatestRoutinePerformance(routineId: string): Promise<RoutinePerformance | null> {
+  const { data, error } = await supabase
+    .from('workout_sessions')
+    .select('started_at, duration_seconds, workout_sets(exercise_id, set_number, weight, reps)')
+    .eq('routine_id', routineId)
+    .not('ended_at', 'is', null)
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const row = data as unknown as LatestPerformanceRow;
+  return {
+    date: row.started_at,
+    durationSeconds: row.duration_seconds ?? 0,
+    sets: row.workout_sets
+      .slice()
+      .sort((a, b) => a.exercise_id.localeCompare(b.exercise_id) || a.set_number - b.set_number)
+      .map((set) => ({
+        exerciseId: set.exercise_id,
+        setNumber: set.set_number,
+        weight: set.weight,
+        reps: set.reps,
+      })),
+  };
 }

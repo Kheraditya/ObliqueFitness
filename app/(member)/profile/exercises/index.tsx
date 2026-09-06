@@ -80,13 +80,12 @@ export default function ExerciseList() {
   }
 
   // This list is frequently reached by pushing across a tab boundary (Active Workout,
-  // Create/Edit Routine all live outside the "profile" tab that owns this route), where a plain
-  // router.back() can't be trusted to unwind back to the caller -- it can pop further than one
-  // level (e.g. landing on Home instead of the active workout session). When we know exactly
-  // where we came from (pick mode always carries returnTo), navigate there explicitly instead.
+  // Create/Edit Routine all live outside the "profile" tab that owns this route). Stack-dismiss
+  // APIs can unwind the tab navigator itself and land on Home, so replace the picker with the
+  // exact caller route instead. This also keeps Cancel from leaving the picker in back history.
   function handleCancel() {
     if (returnTo) {
-      router.dismissTo(returnTo);
+      router.replace(returnTo);
     } else {
       router.back();
     }

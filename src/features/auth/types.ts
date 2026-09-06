@@ -11,4 +11,5 @@ export interface Profile {
   link: string | null;
   sex: string | null;
   birthday: string | null;
+  app_access_enabled?: boolean;
 }

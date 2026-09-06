@@ -12,7 +12,7 @@ jest.mock('../../../../../src/features/exercises/api', () => ({
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(() => ({ id: 'r1' })),
-  router: { push: jest.fn(), replace: jest.fn(), setParams: jest.fn() },
+  router: { push: jest.fn(), replace: jest.fn(), setParams: jest.fn(), back: jest.fn() },
 }));
 
 import { getRoutine, updateRoutine, deleteRoutine } from '../../../../../src/features/routines/api';
@@ -36,11 +36,11 @@ describe('EditRoutine', () => {
 
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Routine name'), 'Push Day v2');
+    await fireEvent.changeText(screen.getByPlaceholderText('Routine title'), 'Push Day v2');
     await fireEvent.press(screen.getByText('Save'));
 
     expect(updateRoutine).toHaveBeenCalledWith('r1', 'Push Day v2', [
-      { exerciseId: 'ex1', exerciseName: 'Bench Press', targetSets: 3, restSeconds: 90, supersetGroup: null },
+      { exerciseId: 'ex1', exerciseName: 'Bench Press', notes: '', targetSets: 3, restSeconds: 90, supersetGroup: null },
     ]);
     expect(router.replace).toHaveBeenCalledWith('/(member)/routines/r1');
 

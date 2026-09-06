@@ -16,6 +16,7 @@ const memberProfile: Profile = {
 };
 const adminProfile: Profile = { ...memberProfile, role: 'admin' };
 const noGymProfile: Profile = { ...memberProfile, gym_id: null };
+const pausedProfile: Profile = { ...memberProfile, app_access_enabled: false };
 
 describe('getInitialRoute', () => {
   it('routes to login when there is no session', () => {
@@ -32,5 +33,9 @@ describe('getInitialRoute', () => {
 
   it('routes admins to the admin dashboard', () => {
     expect(getInitialRoute(session, adminProfile)).toBe('/(admin)/dashboard');
+  });
+
+  it('routes a disabled user to the access-paused screen', () => {
+    expect(getInitialRoute(session, pausedProfile)).toBe('/(auth)/access-paused');
   });
 });

@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { Image, Pressable, ScrollView, Share, Text, View, StyleSheet } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { signOut, getCurrentUserProfile } from '../../../src/features/auth/api';
 import { getWorkoutSummary } from '../../../src/features/workout/api';
+import { getHomeSummary } from '../../../src/features/progress/api';
 import type { RecentSession } from '../../../src/features/workout/api';
 import { Screen } from '../../../src/components/Screen';
 import { Button } from '../../../src/components/Button';
@@ -26,6 +27,8 @@ export default function ProfileHome() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [workoutCount, setWorkoutCount] = useState(0);
   const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
+  const [weekWorkoutCount, setWeekWorkoutCount] = useState(0);
+  const [streakDays, setStreakDays] = useState(0);
   // Presentational only for now -- no per-metric chart data is computed yet, matching the
   // same accepted trade-off already used on the routine detail screen.
   const [metric, setMetric] = useState('duration');
@@ -40,8 +43,20 @@ export default function ProfileHome() {
         setWorkoutCount(summary.count);
         setRecentSessions(summary.recent);
       });
+      getHomeSummary().then((summary) => {
+        setWeekWorkoutCount(summary.workoutCountThisWeek);
+        setStreakDays(summary.streakDays);
+      });
     }, [])
   );
+
+  function handleShareProfile() {
+    const displayName = name ?? 'Oblique Fitness member';
+    Share.share({
+      title: `${displayName}'s training progress`,
+      message: `${displayName}'s training progress on Oblique Fitness\n${workoutCount} total workouts · ${weekWorkoutCount} this week · ${streakDays} day streak`,
+    });
+  }
 
   return (
     <Screen>
@@ -52,10 +67,10 @@ export default function ProfileHome() {
             <Pressable onPress={() => router.push('/(member)/profile/edit')} style={styles.headerIconButton}>
               <Ionicons name="pencil" size={20} color={colors.textPrimary} />
             </Pressable>
-            <Pressable onPress={() => {}} style={styles.headerIconButton}>
+            <Pressable onPress={handleShareProfile} style={styles.headerIconButton} accessibilityLabel="Share training progress">
               <Ionicons name="share-outline" size={20} color={colors.textPrimary} />
             </Pressable>
-            <Pressable onPress={() => {}} style={styles.headerIconButton}>
+            <Pressable onPress={() => router.push('/(member)/profile/settings')} style={styles.headerIconButton} accessibilityLabel="Profile settings">
               <Ionicons name="settings-outline" size={20} color={colors.textPrimary} />
             </Pressable>
           </View>
@@ -71,8 +86,8 @@ export default function ProfileHome() {
           )}
           <View style={styles.statsRow}>
             <StatColumn label="Workouts" value={String(workoutCount)} />
-            <StatColumn label="Followers" value="0" />
-            <StatColumn label="Following" value="0" />
+            <StatColumn label="This week" value={String(weekWorkoutCount)} />
+            <StatColumn label="Streak" value={`${streakDays}d`} />
           </View>
         </View>
 

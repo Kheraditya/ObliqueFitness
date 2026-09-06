@@ -6,13 +6,13 @@ import { colors, spacing } from '../../../theme';
 // A 4-step ramp from "untrained" to "most-trained this period": starts and ends on real
 // theme tokens (colors.surfaceElevated / colors.accent), with two hand-picked intermediate
 // blues in between -- there's no third/fourth theme color to interpolate through instead.
-const INTENSITY_COLORS = [colors.surfaceElevated, '#3D6FA8', '#1D5FC4', colors.accent];
+const INTENSITY_COLORS = ['#234568', '#3D6FA8', '#1D5FC4', colors.accent];
 
 export function buildBodyData(muscleVolumes: { muscle: string; volume: number }[]): ExtendedBodyPart[] {
   const bySlug = new Map<Slug, number>();
 
   for (const { muscle, volume } of muscleVolumes) {
-    const slug = MUSCLE_TO_SLUG[muscle];
+    const slug = MUSCLE_TO_SLUG[muscle.trim().toLowerCase()];
     if (!slug) continue;
     bySlug.set(slug, (bySlug.get(slug) ?? 0) + volume);
   }

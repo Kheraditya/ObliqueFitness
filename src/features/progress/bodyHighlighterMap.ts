@@ -1,10 +1,11 @@
 import type { Slug } from 'react-native-body-highlighter';
 
 // Maps this app's free-exercise-db muscle vocabulary onto react-native-body-highlighter's
-// slug taxonomy. "abductors" has no equivalent slug in this library (v3.2.0) and is
-// deliberately omitted rather than approximated onto an unrelated body part.
+// slug taxonomy. The library has no separate hip-abductor region, so abductors use its nearest
+// anatomical region (gluteal) instead of disappearing from the seven-day graph.
 export const MUSCLE_TO_SLUG: Partial<Record<string, Slug>> = {
   abdominals: 'abs',
+  abductors: 'gluteal',
   adductors: 'adductors',
   biceps: 'biceps',
   calves: 'calves',

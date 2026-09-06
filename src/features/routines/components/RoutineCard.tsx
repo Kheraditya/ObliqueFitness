@@ -6,12 +6,13 @@ import { colors, radius, spacing } from '../../../theme';
 interface RoutineCardProps {
   name: string;
   exercisePreview?: string;
+  onOpen?: () => void;
   onStart: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function RoutineCard({ name, exercisePreview, onStart, onEdit, onDelete }: RoutineCardProps) {
+export function RoutineCard({ name, exercisePreview, onOpen, onStart, onEdit, onDelete }: RoutineCardProps) {
   function handleMenu() {
     Alert.alert(name, undefined, [
       { text: 'Edit Routine', onPress: onEdit },
@@ -23,14 +24,14 @@ export function RoutineCard({ name, exercisePreview, onStart, onEdit, onDelete }
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <View style={styles.textCol}>
+        <Pressable style={styles.textCol} onPress={onOpen} disabled={!onOpen}>
           <Text style={styles.name}>{name}</Text>
           {!!exercisePreview && (
             <Text style={styles.preview} numberOfLines={2}>
               {exercisePreview}
             </Text>
           )}
-        </View>
+        </Pressable>
         <Pressable onPress={handleMenu} hitSlop={8} testID={`routine-menu-${name}`}>
           <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
         </Pressable>
@@ -47,6 +48,8 @@ const styles = StyleSheet.create({
     padding: spacing.m,
     marginBottom: spacing.m,
     gap: spacing.m,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   headerRow: {
     flexDirection: 'row',

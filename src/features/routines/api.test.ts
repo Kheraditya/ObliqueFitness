@@ -13,6 +13,7 @@ import {
   createRoutine,
   updateRoutine,
   getRoutineVolumeHistory,
+  getLatestRoutinePerformance,
 } from './api';
 
 beforeEach(() => {
@@ -78,7 +79,7 @@ describe('getRoutine', () => {
 
     const exOrder = jest.fn().mockResolvedValue({
       data: [
-        { id: 're1', exercise_id: 'ex1', order: 0, target_sets: 3, rest_seconds: 90, superset_group: null, exercises: { name: 'Bench Press' } },
+        { id: 're1', exercise_id: 'ex1', order: 0, target_sets: 3, rest_seconds: 90, notes: 'Pause at the chest', superset_group: null, exercises: { name: 'Bench Press', images: ['bench.jpg'] } },
       ],
       error: null,
     });
@@ -98,7 +99,7 @@ describe('getRoutine', () => {
       id: 'r1',
       name: 'Push Day',
       exercises: [
-        { id: 're1', exerciseId: 'ex1', exerciseName: 'Bench Press', order: 0, targetSets: 3, restSeconds: 90, supersetGroup: null },
+        { id: 're1', exerciseId: 'ex1', exerciseName: 'Bench Press', imageUri: 'bench.jpg', notes: 'Pause at the chest', order: 0, targetSets: 3, restSeconds: 90, supersetGroup: null },
       ],
     });
   });
@@ -149,8 +150,8 @@ describe('createRoutine', () => {
 
     expect(routineInsert).toHaveBeenCalledWith({ owner_id: 'u1', name: 'Push Day' });
     expect(exercisesInsert).toHaveBeenCalledWith([
-      { routine_id: 'r1', exercise_id: 'ex1', order: 0, target_sets: 3, rest_seconds: 90, superset_group: null },
-      { routine_id: 'r1', exercise_id: 'ex2', order: 1, target_sets: 5, rest_seconds: 120, superset_group: null },
+      { routine_id: 'r1', exercise_id: 'ex1', order: 0, target_sets: 3, rest_seconds: 90, notes: null, superset_group: null },
+      { routine_id: 'r1', exercise_id: 'ex2', order: 1, target_sets: 5, rest_seconds: 120, notes: null, superset_group: null },
     ]);
     expect(result).toEqual({ id: 'r1', error: null });
   });
@@ -179,7 +180,7 @@ describe('updateRoutine', () => {
     expect(nameEq).toHaveBeenCalledWith('id', 'r1');
     expect(deleteEq).toHaveBeenCalledWith('routine_id', 'r1');
     expect(exercisesInsert).toHaveBeenCalledWith([
-      { routine_id: 'r1', exercise_id: 'ex1', order: 0, target_sets: 4, rest_seconds: 60, superset_group: 1 },
+      { routine_id: 'r1', exercise_id: 'ex1', order: 0, target_sets: 4, rest_seconds: 60, notes: null, superset_group: 1 },
     ]);
     expect(result).toEqual({ error: null });
   });
@@ -194,7 +195,8 @@ describe('getRoutineVolumeHistory', () => {
       ],
       error: null,
     });
-    const eq = jest.fn(() => ({ order }));
+    const not = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ not }));
     const select = jest.fn(() => ({ eq }));
     (supabase.from as jest.Mock).mockReturnValue({ select });
 
@@ -202,20 +204,57 @@ describe('getRoutineVolumeHistory', () => {
 
     expect(supabase.from).toHaveBeenCalledWith('workout_sessions');
     expect(eq).toHaveBeenCalledWith('routine_id', 'r1');
+    expect(not).toHaveBeenCalledWith('ended_at', 'is', null);
     expect(result).toEqual([
-      { date: '2026-09-01T00:00:00Z', volume: 1000 },
-      { date: '2026-09-03T00:00:00Z', volume: 330 },
+      { date: '2026-09-01T00:00:00Z', volume: 1000, reps: 10, durationSeconds: 0 },
+      { date: '2026-09-03T00:00:00Z', volume: 330, reps: 3, durationSeconds: 0 },
     ]);
   });
 
   it('returns an empty array when there are no sessions', async () => {
     const order = jest.fn().mockResolvedValue({ data: [], error: null });
-    const eq = jest.fn(() => ({ order }));
+    const not = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ not }));
     const select = jest.fn(() => ({ eq }));
     (supabase.from as jest.Mock).mockReturnValue({ select });
 
     const result = await getRoutineVolumeHistory('r1');
 
     expect(result).toEqual([]);
+  });
+});
+
+describe('getLatestRoutinePerformance', () => {
+  it('returns the latest completed session with its performed sets in order', async () => {
+    const maybeSingle = jest.fn().mockResolvedValue({
+      data: {
+        started_at: '2026-09-05T12:00:00Z',
+        duration_seconds: 1800,
+        workout_sets: [
+          { exercise_id: 'ex1', set_number: 2, weight: 55, reps: 10 },
+          { exercise_id: 'ex1', set_number: 1, weight: 50, reps: 12 },
+        ],
+      },
+      error: null,
+    });
+    const limit = jest.fn(() => ({ maybeSingle }));
+    const order = jest.fn(() => ({ limit }));
+    const not = jest.fn(() => ({ order }));
+    const eq = jest.fn(() => ({ not }));
+    const select = jest.fn(() => ({ eq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getLatestRoutinePerformance('r1');
+
+    expect(eq).toHaveBeenCalledWith('routine_id', 'r1');
+    expect(not).toHaveBeenCalledWith('ended_at', 'is', null);
+    expect(result).toEqual({
+      date: '2026-09-05T12:00:00Z',
+      durationSeconds: 1800,
+      sets: [
+        { exerciseId: 'ex1', setNumber: 1, weight: 50, reps: 12 },
+        { exerciseId: 'ex1', setNumber: 2, weight: 55, reps: 10 },
+      ],
+    });
   });
 });

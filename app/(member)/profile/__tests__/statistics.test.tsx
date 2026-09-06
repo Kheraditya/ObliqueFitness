@@ -28,17 +28,26 @@ describe('Statistics', () => {
     expect(screen.queryByText('Exercises')).toBeNull();
   });
 
-  it('navigates to Muscle Distribution and Body Distribution and Monthly Report', async () => {
+  it('navigates from every advanced statistics option', async () => {
     (getMuscleVolumes as jest.Mock).mockResolvedValue([]);
 
     await render(<Statistics />);
     await waitFor(() => expect(screen.getByText('Monthly Report')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('Set count per muscle group'));
+    expect(router.push).toHaveBeenCalledWith('/(member)/profile/set-count');
 
     await fireEvent.press(screen.getByText('Muscle distribution (Chart)'));
     expect(router.push).toHaveBeenCalledWith('/(member)/profile/muscle-distribution');
 
     await fireEvent.press(screen.getByText('Muscle distribution (Body)'));
     expect(router.push).toHaveBeenCalledWith('/(member)/profile/body-distribution');
+
+    await fireEvent.press(screen.getByText('Main exercises'));
+    expect(router.push).toHaveBeenCalledWith('/(member)/profile/main-exercises');
+
+    await fireEvent.press(screen.getByText('Leaderboard Exercises'));
+    expect(router.push).toHaveBeenCalledWith('/(member)/profile/leaderboard-exercises');
 
     await fireEvent.press(screen.getByText('Monthly Report'));
     expect(router.push).toHaveBeenCalledWith('/(member)/profile/monthly-report');

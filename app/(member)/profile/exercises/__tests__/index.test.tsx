@@ -5,7 +5,7 @@ jest.mock('../../../../../src/features/exercises/api', () => ({
 }));
 
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), back: jest.fn(), dismissTo: jest.fn(), setParams: jest.fn() },
+  router: { push: jest.fn(), replace: jest.fn(), back: jest.fn(), dismissTo: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: jest.fn(() => ({})),
 }));
 
@@ -159,7 +159,7 @@ describe('ExerciseList', () => {
     });
   });
 
-  it('dismisses explicitly to the caller when Cancel is pressed in pick mode, instead of a plain back() that can pop too far across the tab boundary', async () => {
+  it('replaces the picker with its caller when Cancel is pressed in pick mode', async () => {
     (listExercises as jest.Mock).mockResolvedValue([]);
     (useLocalSearchParams as jest.Mock).mockReturnValue({
       pickMode: 'true',
@@ -169,7 +169,7 @@ describe('ExerciseList', () => {
     await render(<ExerciseList />);
     await fireEvent.press(screen.getByText('Cancel'));
 
-    expect(router.dismissTo).toHaveBeenCalledWith('/(member)/active-workout/s1');
+    expect(router.replace).toHaveBeenCalledWith('/(member)/active-workout/s1');
     expect(router.back).not.toHaveBeenCalled();
   });
 

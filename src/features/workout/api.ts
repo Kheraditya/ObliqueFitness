@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import type { SessionExercise, LoggedSet } from './types';
+import type { SessionExercise, LoggedSet, PreviousSet } from './types';
 
 interface SessionRow {
   routine_id: string | null;
@@ -10,13 +10,14 @@ interface RoutineExerciseRow {
   exercise_id: string;
   order: number;
   rest_seconds: number;
+  notes: string | null;
   superset_group: number | null;
-  exercises: { name: string } | null;
+  exercises: { name: string; images: string[] } | null;
 }
 
 interface LoggedExerciseRow {
   exercise_id: string;
-  exercises: { name: string } | null;
+  exercises: { name: string; images: string[] } | null;
 }
 
 interface LoggedSetRow {
@@ -26,6 +27,13 @@ interface LoggedSetRow {
   weight: number | null;
   reps: number | null;
   rpe: number | null;
+}
+
+interface PreviousSetRow {
+  session_id: string;
+  set_number: number;
+  weight: number | null;
+  reps: number | null;
 }
 
 export async function startSession(routineId: string | null): Promise<{ id: string | null; error: string | null }> {
@@ -97,7 +105,7 @@ export async function getSessionExercises(
   if (routineId) {
     const { data } = await supabase
       .from('routine_exercises')
-      .select('exercise_id, order, rest_seconds, superset_group, exercises(name)')
+      .select('exercise_id, order, rest_seconds, notes, superset_group, exercises(name, images)')
       .eq('routine_id', routineId)
       .order('order', { ascending: true });
 
@@ -106,6 +114,8 @@ export async function getSessionExercises(
       exercises.push({
         exerciseId: r.exercise_id,
         exerciseName: r.exercises?.name ?? '',
+        ...(r.exercises?.images?.[0] ? { imageUri: r.exercises.images[0] } : {}),
+        notes: r.notes ?? '',
         order: r.order,
         restSeconds: r.rest_seconds,
         supersetGroup: r.superset_group,
@@ -113,7 +123,10 @@ export async function getSessionExercises(
     }
   }
 
-  const { data: loggedData } = await supabase.from('workout_sets').select('exercise_id, exercises(name)').eq('session_id', sessionId);
+  const { data: loggedData } = await supabase
+    .from('workout_sets')
+    .select('exercise_id, exercises(name, images)')
+    .eq('session_id', sessionId);
 
   const loggedRows = (loggedData ?? []) as unknown as LoggedExerciseRow[];
   const knownIds = new Set(exercises.map((e) => e.exerciseId));
@@ -124,6 +137,7 @@ export async function getSessionExercises(
     exercises.push({
       exerciseId: r.exercise_id,
       exerciseName: r.exercises?.name ?? '',
+      ...(r.exercises?.images?.[0] ? { imageUri: r.exercises.images[0] } : {}),
       order: exercises.length,
       restSeconds: 90,
       supersetGroup: null,
@@ -150,6 +164,38 @@ export async function getLoggedSets(sessionId: string): Promise<LoggedSet[]> {
     reps: row.reps,
     rpe: row.rpe,
   }));
+}
+
+export async function getPreviousExerciseSets(
+  exerciseId: string,
+  currentSessionId: string
+): Promise<PreviousSet[]> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return [];
+
+  const { data, error } = await supabase
+    .from('workout_sets')
+    .select('session_id, set_number, weight, reps, workout_sessions!inner(user_id)')
+    .eq('exercise_id', exerciseId)
+    .eq('workout_sessions.user_id', session.user.id)
+    .neq('session_id', currentSessionId)
+    .order('completed_at', { ascending: false })
+    .limit(20);
+
+  if (error || !data || data.length === 0) return [];
+
+  const rows = data as unknown as PreviousSetRow[];
+  const latestSessionId = rows[0].session_id;
+  return rows
+    .filter((row) => row.session_id === latestSessionId)
+    .sort((a, b) => a.set_number - b.set_number)
+    .map((row) => ({
+      setNumber: row.set_number,
+      weight: row.weight,
+      reps: row.reps,
+    }));
 }
 
 export async function logSet(

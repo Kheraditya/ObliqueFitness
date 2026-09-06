@@ -4,6 +4,7 @@ import { BackHandler } from 'react-native';
 jest.mock('../../../../src/features/workout/api', () => ({
   getSessionExercises: jest.fn(),
   getLoggedSets: jest.fn(),
+  getPreviousExerciseSets: jest.fn().mockResolvedValue([]),
   logSet: jest.fn(),
   updateWorkoutSet: jest.fn(),
   finishSession: jest.fn(),
@@ -35,7 +36,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: jest.fn(() => ({ sessionId: 's1' })),
 }));
 
-import { getSessionExercises, getLoggedSets, logSet, finishSession, discardSession } from '../../../../src/features/workout/api';
+import { getSessionExercises, getLoggedSets, getPreviousExerciseSets, logSet, finishSession, discardSession } from '../../../../src/features/workout/api';
 import { getExercise } from '../../../../src/features/exercises/api';
 import { getWorkoutSettings } from '../../../../src/features/workout/settings';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -55,6 +56,7 @@ describe('ActiveWorkout', () => {
       inlineTimer: true,
       livePrNotification: true,
     });
+    (getPreviousExerciseSets as jest.Mock).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -75,9 +77,53 @@ describe('ActiveWorkout', () => {
 
     await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
     await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
-    await fireEvent.press(screen.getByText('Add Set'));
+    await fireEvent.press(screen.getByTestId('complete-set-button'));
 
     expect(logSet).toHaveBeenCalledWith('s1', 'ex1', 1, 100, 5, null);
+  });
+
+  it('shows a loading state instead of the no-exercises state while routine data is pending', async () => {
+    let resolveSession!: (value: {
+      exercises: { exerciseId: string; exerciseName: string; order: number; restSeconds: number; supersetGroup: null }[];
+      startedAt: string;
+    }) => void;
+    (getSessionExercises as jest.Mock).mockReturnValue(
+      new Promise((resolve) => {
+        resolveSession = resolve;
+      })
+    );
+    (getLoggedSets as jest.Mock).mockResolvedValue([]);
+
+    await render(<ActiveWorkout />);
+
+    expect(screen.getByText('Loading routine...')).toBeTruthy();
+    expect(screen.queryByText('Get started')).toBeNull();
+
+    await act(async () => {
+      resolveSession({
+        exercises: [{ exerciseId: 'ex1', exerciseName: 'Bench Press', order: 0, restSeconds: 90, supersetGroup: null }],
+        startedAt: '2026-09-04T00:00:00Z',
+      });
+    });
+
+    await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
+    expect(screen.queryByText('Loading routine...')).toBeNull();
+  });
+
+  it('shows previous performance and manually starts the exercise rest timer', async () => {
+    (getSessionExercises as jest.Mock).mockResolvedValue({
+      exercises: [{ exerciseId: 'ex1', exerciseName: 'Bench Press', order: 0, restSeconds: 90, supersetGroup: null }],
+      startedAt: '2026-09-04T00:00:00Z',
+    });
+    (getLoggedSets as jest.Mock).mockResolvedValue([]);
+    (getPreviousExerciseSets as jest.Mock).mockResolvedValue([{ setNumber: 1, weight: 80, reps: 8 }]);
+
+    await render(<ActiveWorkout />);
+
+    await waitFor(() => expect(screen.getByText('80 kg x 8')).toBeTruthy());
+    await fireEvent.press(screen.getByLabelText('Start rest timer'));
+
+    expect(screen.getByText('Resting: 90s')).toBeTruthy();
   });
 
   it('finishes the session and navigates back', async () => {
@@ -92,6 +138,19 @@ describe('ActiveWorkout', () => {
 
     expect(finishSession).toHaveBeenCalledWith('s1', '2026-09-04T00:00:00Z');
     expect(router.replace).toHaveBeenCalledWith('/(member)/workout');
+  });
+
+  it('returns an admin self-workout to the admin dashboard when finished', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ sessionId: 's1', returnTo: '/(admin)/dashboard' });
+    (getSessionExercises as jest.Mock).mockResolvedValue({ exercises: [], startedAt: '2026-09-04T00:00:00Z' });
+    (getLoggedSets as jest.Mock).mockResolvedValue([]);
+    (finishSession as jest.Mock).mockResolvedValue({ error: null });
+
+    await render(<ActiveWorkout />);
+    await waitFor(() => expect(screen.getByText('Finish')).toBeTruthy());
+    await fireEvent.press(screen.getByText('Finish'));
+
+    expect(router.replace).toHaveBeenCalledWith('/(admin)/dashboard');
   });
 
   it('does not create a duplicate entry when the picked exercise is already in the session', async () => {
@@ -134,7 +193,7 @@ describe('ActiveWorkout', () => {
       await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
       await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
       await act(async () => {
-        await fireEvent.press(screen.getByText('Add Set'));
+        await fireEvent.press(screen.getByTestId('complete-set-button'));
       });
 
       expect(screen.getByText('Resting: 90s')).toBeTruthy();
@@ -149,7 +208,7 @@ describe('ActiveWorkout', () => {
       await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
       await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
       await act(async () => {
-        await fireEvent.press(screen.getByText('Add Set'));
+        await fireEvent.press(screen.getByTestId('complete-set-button'));
       });
 
       // Without the restKey remount fix, this would still read 'Resting: 85s'

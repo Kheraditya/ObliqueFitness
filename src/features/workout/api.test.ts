@@ -12,6 +12,7 @@ import {
   getActiveSession,
   getSessionExercises,
   getLoggedSets,
+  getPreviousExerciseSets,
   logSet,
   updateWorkoutSet,
   finishSession,
@@ -152,7 +153,7 @@ describe('getSessionExercises', () => {
     expect(supabase.from).toHaveBeenNthCalledWith(2, 'routine_exercises');
     expect(supabase.from).toHaveBeenNthCalledWith(3, 'workout_sets');
     expect(result).toEqual({
-      exercises: [{ exerciseId: 'ex1', exerciseName: 'Bench Press', order: 0, restSeconds: 90, supersetGroup: null }],
+      exercises: [{ exerciseId: 'ex1', exerciseName: 'Bench Press', notes: '', order: 0, restSeconds: 90, supersetGroup: null }],
       startedAt: '2026-09-04T00:00:00Z',
     });
   });
@@ -210,6 +211,36 @@ describe('getLoggedSets', () => {
     const result = await getLoggedSets('s1');
 
     expect(result).toEqual([]);
+  });
+});
+
+describe('getPreviousExerciseSets', () => {
+  it('returns set values from the most recent previous session only', async () => {
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    const limit = jest.fn().mockResolvedValue({
+      data: [
+        { session_id: 'previous-1', set_number: 2, weight: 85, reps: 6 },
+        { session_id: 'previous-1', set_number: 1, weight: 80, reps: 8 },
+        { session_id: 'older', set_number: 1, weight: 70, reps: 10 },
+      ],
+      error: null,
+    });
+    const order = jest.fn(() => ({ limit }));
+    const neq = jest.fn(() => ({ order }));
+    const userEq = jest.fn(() => ({ neq }));
+    const exerciseEq = jest.fn(() => ({ eq: userEq }));
+    const select = jest.fn(() => ({ eq: exerciseEq }));
+    (supabase.from as jest.Mock).mockReturnValue({ select });
+
+    const result = await getPreviousExerciseSets('ex1', 'current');
+
+    expect(exerciseEq).toHaveBeenCalledWith('exercise_id', 'ex1');
+    expect(userEq).toHaveBeenCalledWith('workout_sessions.user_id', 'u1');
+    expect(neq).toHaveBeenCalledWith('session_id', 'current');
+    expect(result).toEqual([
+      { setNumber: 1, weight: 80, reps: 8 },
+      { setNumber: 2, weight: 85, reps: 6 },
+    ]);
   });
 });
 

@@ -91,6 +91,15 @@ describe('ExerciseDetail', () => {
     expect(mockSetOptions).toHaveBeenCalledWith({ gestureEnabled: true });
   });
 
+  it('opens directly on the leaderboard when requested by Statistics', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: 'ex-1', initialTab: 'leaderboard' });
+    (getExercise as jest.Mock).mockResolvedValue(mockExercise);
+
+    await render(<ExerciseDetail />);
+    await waitFor(() => expect(getLeaderboard).toHaveBeenCalledWith('ex-1'));
+    expect(getLeaderboardOptIn).toHaveBeenCalled();
+  });
+
   it('shows a back button even while the exercise is still loading', async () => {
     (getExercise as jest.Mock).mockResolvedValue(new Promise(() => {}));
 

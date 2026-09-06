@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BackHandler, Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
+import { ActivityIndicator, BackHandler, Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Body from "react-native-body-highlighter";
@@ -12,6 +12,7 @@ import { ConfirmModal } from "../../../src/components/ConfirmModal";
 import {
   getSessionExercises,
   getLoggedSets,
+  getPreviousExerciseSets,
   logSet,
   updateWorkoutSet,
   finishSession,
@@ -26,18 +27,21 @@ import { formatElapsed } from "../../../src/features/workout/format";
 import type {
   SessionExercise,
   LoggedSet,
+  PreviousSet,
 } from "../../../src/features/workout/types";
 import { colors, spacing, typography } from "../../../src/theme";
 
 const KEEP_AWAKE_TAG = "active-workout";
 
 export default function ActiveWorkout() {
-  const { sessionId, addExerciseId } = useLocalSearchParams<{
+  const { sessionId, addExerciseId, returnTo } = useLocalSearchParams<{
     sessionId: string;
     addExerciseId?: string;
+    returnTo?: string;
   }>();
   const [exercises, setExercises] = useState<SessionExercise[]>([]);
   const [sets, setSets] = useState<LoggedSet[]>([]);
+  const [previousSets, setPreviousSets] = useState<Record<string, PreviousSet[]>>({});
   const [startedAt, setStartedAt] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [restSeconds, setRestSeconds] = useState<number | null>(null);
@@ -87,6 +91,7 @@ export default function ActiveWorkout() {
           {
             exerciseId: exercise.id,
             exerciseName: exercise.name,
+            ...(exercise.images?.[0] ? { imageUri: exercise.images[0] } : {}),
             order: prev.length,
             restSeconds: 90,
             supersetGroup: null,
@@ -96,6 +101,27 @@ export default function ActiveWorkout() {
       router.setParams({ addExerciseId: undefined });
     });
   }, [addExerciseId, loaded]);
+
+  useEffect(() => {
+    if (!loaded || exercises.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      exercises.map(async (exercise) => ({
+        exerciseId: exercise.exerciseId,
+        sets: await getPreviousExerciseSets(exercise.exerciseId, sessionId),
+      }))
+    )
+      .then((results) => {
+        if (cancelled) return;
+        setPreviousSets(Object.fromEntries(results.map((result) => [result.exerciseId, result.sets])));
+      })
+      .catch(() => {
+        if (!cancelled) setPreviousSets({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [exercises, loaded, sessionId]);
 
   useEffect(() => {
     if (!startedAt) return;
@@ -118,7 +144,7 @@ export default function ActiveWorkout() {
   // Leaves the workout in progress rather than discarding it -- the session stays open in the
   // background and resurfaces as a resumable bar on the Workout tab (ActiveWorkoutBar).
   function handleMinimize() {
-    router.replace("/(member)/workout");
+    router.replace(returnTo || "/(member)/workout");
   }
 
   async function handleLogSet(
@@ -179,7 +205,7 @@ export default function ActiveWorkout() {
       setError(finishError);
       return;
     }
-    router.replace("/(member)/workout");
+    router.replace(returnTo || "/(member)/workout");
   }
 
   function handleDiscard() {
@@ -193,15 +219,18 @@ export default function ActiveWorkout() {
       setError(discardError);
       return;
     }
-    router.replace("/(member)/workout");
+    router.replace(returnTo || "/(member)/workout");
   }
 
   function handleAddExercise() {
+    const activeWorkoutReturnTo = returnTo
+      ? `/(member)/active-workout/${sessionId}?returnTo=${encodeURIComponent(returnTo)}`
+      : `/(member)/active-workout/${sessionId}`;
     router.push({
       pathname: "/(member)/profile/exercises",
       params: {
         pickMode: "true",
-        returnTo: `/(member)/active-workout/${sessionId}`,
+        returnTo: activeWorkoutReturnTo,
       },
     });
   }
@@ -285,7 +314,12 @@ export default function ActiveWorkout() {
         />
       )}
 
-      {exercises.length === 0 ? (
+      {!loaded ? (
+        <View style={styles.loadingState}>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={styles.loadingText}>Loading routine...</Text>
+        </View>
+      ) : exercises.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons
             name="barbell-outline"
@@ -325,10 +359,15 @@ export default function ActiveWorkout() {
                 key={exercise.exerciseId}
                 exercise={exercise}
                 sets={sets.filter((s) => s.exerciseId === exercise.exerciseId)}
+                previousSets={previousSets[exercise.exerciseId] ?? []}
                 onLogSet={(weight, reps, rpe) =>
                   handleLogSet(exercise.exerciseId, weight, reps, rpe)
                 }
                 onUpdateSet={handleUpdateSet}
+                onStartRestTimer={() => {
+                  setRestSeconds(exercise.restSeconds);
+                  setRestKey((key) => key + 1);
+                }}
                 showRpe={showRpe}
               />
             ))}
@@ -421,6 +460,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.s,
+  },
+  loadingState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.m,
+  },
+  loadingText: {
+    color: colors.textSecondary,
+    fontSize: 15,
   },
   emptyTitle: {
     color: colors.textPrimary,

@@ -26,6 +26,7 @@ export default function ExerciseDetail() {
     id,
     pickMode: pickModeParam,
     callerReturnTo,
+    initialTab,
   } = useLocalSearchParams<{
     id: string;
     pickMode?: string;
@@ -38,10 +39,13 @@ export default function ExerciseDetail() {
     // state on the list (search text, equipment/muscle filter) is plain component state, not
     // route params, so it isn't affected either way -- the list screen itself never unmounts.
     callerReturnTo?: string;
+    initialTab?: TabKey;
   }>();
   const pickMode = pickModeParam === "true";
   const [exercise, setExercise] = useState<Exercise | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>("summary");
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    TABS.some((tab) => tab.key === initialTab) ? initialTab! : "summary"
+  );
   const navigation = useNavigation();
 
   function handleBack() {

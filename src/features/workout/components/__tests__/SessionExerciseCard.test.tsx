@@ -18,7 +18,7 @@ describe('SessionExerciseCard', () => {
     const inputs = screen.getAllByPlaceholderText('-');
     await fireEvent.changeText(inputs[0], '100');
     await fireEvent.changeText(inputs[1], '5');
-    await fireEvent.press(screen.getByText('Add Set'));
+    await fireEvent.press(screen.getByTestId('complete-set-button'));
 
     expect(onLogSet).toHaveBeenCalledWith(100, 5, null);
     expect(screen.getByText('SET')).toBeTruthy();
@@ -35,7 +35,7 @@ describe('SessionExerciseCard', () => {
     expect(screen.getByText('8')).toBeTruthy();
     await fireEvent.press(screen.getByText('80'));
     await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '85');
-    await fireEvent.press(screen.getByText('Update Set'));
+    await fireEvent.press(screen.getByTestId('complete-set-button'));
 
     expect(onUpdateSet).toHaveBeenCalledWith('set1', 85, 8, null);
   });
@@ -51,8 +51,29 @@ describe('SessionExerciseCard', () => {
 
     await fireEvent.changeText(screen.getAllByPlaceholderText('-')[0], '100');
     await fireEvent.changeText(screen.getAllByPlaceholderText('-')[1], '5');
-    await fireEvent.press(screen.getByText('Add Set'));
+    await fireEvent.press(screen.getByTestId('complete-set-button'));
 
     expect(onLogSet).toHaveBeenCalledWith(100, 5, null);
+  });
+
+  it('shows the matching previous set and provides working notes and rest controls', async () => {
+    const onStartRestTimer = jest.fn();
+    await render(
+      <SessionExerciseCard
+        exercise={exercise}
+        sets={[]}
+        previousSets={[{ setNumber: 1, weight: 80, reps: 8 }]}
+        onLogSet={jest.fn()}
+        onUpdateSet={jest.fn()}
+        onStartRestTimer={onStartRestTimer}
+      />
+    );
+
+    expect(screen.getByText('80 kg x 8')).toBeTruthy();
+    await fireEvent.changeText(screen.getByPlaceholderText('Add workout notes here'), 'Keep elbows tucked');
+    expect(screen.getByDisplayValue('Keep elbows tucked')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Start rest timer'));
+    expect(onStartRestTimer).toHaveBeenCalled();
   });
 });

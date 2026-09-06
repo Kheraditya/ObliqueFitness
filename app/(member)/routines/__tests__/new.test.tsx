@@ -33,10 +33,12 @@ describe('NewRoutine', () => {
     await waitFor(() => expect(screen.getByText('Bench Press')).toBeTruthy());
 
     await fireEvent.changeText(screen.getByPlaceholderText('Routine title'), 'Push Day');
+    await fireEvent.changeText(screen.getByPlaceholderText('Add routine notes here'), 'Pause at the chest');
+    await fireEvent.press(screen.getByLabelText('Change rest timer for Bench Press'));
     await fireEvent.press(screen.getByText('Save'));
 
     expect(createRoutine).toHaveBeenCalledWith('Push Day', [
-      { exerciseId: 'ex1', exerciseName: 'Bench Press', targetSets: 3, restSeconds: 90, supersetGroup: null },
+      { exerciseId: 'ex1', exerciseName: 'Bench Press', notes: 'Pause at the chest', targetSets: 1, restSeconds: 90, supersetGroup: null },
     ]);
     expect(router.replace).toHaveBeenCalledWith('/(member)/routines/r1');
   });

@@ -38,6 +38,8 @@ export default function Statistics() {
           title="Set count per muscle group"
           subtitle="Number of sets logged for each muscle group."
           icon="stats-chart-outline"
+          trailing="chevron"
+          onPress={() => router.push('/(member)/profile/set-count')}
         />
         <ListItem
           title="Muscle distribution (Chart)"
@@ -53,8 +55,20 @@ export default function Statistics() {
           trailing="chevron"
           onPress={() => router.push('/(member)/profile/body-distribution')}
         />
-        <ListItem title="Main exercises" subtitle="List of exercises you do most often." icon="barbell-outline" />
-        <ListItem title="Leaderboard Exercises" subtitle="List of the leaderboard-eligible exercises." icon="trophy-outline" />
+        <ListItem
+          title="Main exercises"
+          subtitle="List of exercises you do most often."
+          icon="barbell-outline"
+          trailing="chevron"
+          onPress={() => router.push('/(member)/profile/main-exercises')}
+        />
+        <ListItem
+          title="Leaderboard Exercises"
+          subtitle="List of the leaderboard-eligible exercises."
+          icon="trophy-outline"
+          trailing="chevron"
+          onPress={() => router.push('/(member)/profile/leaderboard-exercises')}
+        />
         <ListItem
           title="Monthly Report"
           subtitle="Recap of your monthly workouts and statistics."

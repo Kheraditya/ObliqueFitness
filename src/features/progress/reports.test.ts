@@ -5,7 +5,7 @@ jest.mock('../../lib/supabase', () => ({
 }));
 
 import { supabase } from '../../lib/supabase';
-import { getPeriodSummary, getSetsCountByMuscle, getMonthlyTotals } from './reports';
+import { getPeriodSummary, getSetsCountByMuscle, getMonthlyTotals, getMainExercises } from './reports';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -57,13 +57,13 @@ describe('getPeriodSummary', () => {
 });
 
 describe('getSetsCountByMuscle', () => {
-  it('counts sets (not volume) per primary muscle', async () => {
+  it('counts sets for both primary and secondary muscles', async () => {
     const not = jest.fn().mockResolvedValue({
       data: [
         {
           workout_sets: [
-            { exercises: { primary_muscles: ['chest', 'triceps'] } },
-            { exercises: { primary_muscles: ['chest'] } },
+            { exercises: { primary_muscles: ['chest'], secondary_muscles: ['triceps'] } },
+            { exercises: { primary_muscles: ['chest'], secondary_muscles: [] } },
           ],
         },
       ],
@@ -83,6 +83,26 @@ describe('getSetsCountByMuscle', () => {
         { muscle: 'triceps', sets: 1 },
       ])
     );
+  });
+});
+
+describe('getMainExercises', () => {
+  it('ranks completed-set exercises by frequency', async () => {
+    const not = jest.fn().mockResolvedValue({
+      data: [{ workout_sets: [
+        { exercise_id: 'e1', exercises: { name: 'Bench Press', images: ['bench.jpg'] } },
+        { exercise_id: 'e1', exercises: { name: 'Bench Press', images: ['bench.jpg'] } },
+        { exercise_id: 'e2', exercises: { name: 'Squat', images: [] } },
+      ] }],
+      error: null,
+    });
+    const gte = jest.fn(() => ({ not }));
+    (supabase.from as jest.Mock).mockReturnValue({ select: jest.fn(() => ({ gte })) });
+
+    await expect(getMainExercises('2026-06-01T00:00:00Z')).resolves.toEqual([
+      { id: 'e1', name: 'Bench Press', imageUri: 'bench.jpg', setCount: 2 },
+      { id: 'e2', name: 'Squat', setCount: 1 },
+    ]);
   });
 });
 

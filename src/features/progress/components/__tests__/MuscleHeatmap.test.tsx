@@ -15,13 +15,17 @@ describe('buildBodyData', () => {
     expect(data).toEqual([{ slug: 'upper-back', intensity: 4 }]);
   });
 
-  it('skips a muscle with no equivalent slug (e.g. abductors)', () => {
+  it('maps hip abductors to the closest visible gluteal region', () => {
     const data = buildBodyData([{ muscle: 'abductors', volume: 999 }]);
-    expect(data).toEqual([]);
+    expect(data).toEqual([{ slug: 'gluteal', intensity: 4 }]);
   });
 
   it('returns an empty array for empty input without crashing', () => {
     expect(buildBodyData([])).toEqual([]);
+  });
+
+  it('normalizes custom exercise muscle casing and retains zero-kg activity', () => {
+    expect(buildBodyData([{ muscle: ' Chest ', volume: 0 }])).toEqual([{ slug: 'chest', intensity: 1 }]);
   });
 
   it('gives the highest-volume muscle the top intensity and scales others relative to it', () => {
